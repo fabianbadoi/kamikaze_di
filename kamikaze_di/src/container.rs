@@ -11,12 +11,12 @@ pub struct Container {
 
 // TODO these can be trait aliases, once that feature becomes stable
 // TODO maybe unboxed closures? look for support
-pub type Factory = FnMut(&Container) -> Box<dyn Any + 'static>;
-pub type Builder = FnOnce(&Container) -> Box<dyn Any + 'static>;
+pub type Factory<T> = FnMut(&Container) -> T;
+pub type Builder<T> = FnOnce(&Container) -> T;
 
 enum DependencyType {
-    Factory(Box<Factory>),
-    Builder(Box<Builder>),
+    Factory(Box<dyn Any>),
+    Builder(Box<dyn Any>),
     Shared(Rc<Any>),
 }
 
@@ -27,8 +27,11 @@ impl Container {
         self.insert::<T>(item)
     }
 
-    pub fn register_factory<T: Any + 'static>(&mut self, factory: Box<Factory>) -> DiResult<()> {
-        let item = DependencyType::Factory(factory);
+    pub fn register_factory<T, F>(&mut self, factory: F) -> DiResult<()>
+        where F: (FnMut(&Container) -> T) + 'static,
+              T: 'static
+    {
+        let item = DependencyType::Factory(Box::new(factory));
 
         self.insert::<T>(item)
     }
@@ -39,8 +42,11 @@ impl Container {
         self.insert::<T>(item)
     }
 
-    pub fn register_builder<T: 'static>(&mut self, builder: Box<Builder>) -> DiResult<()> {
-        let item = DependencyType::Builder(builder);
+    pub fn register_builder<T, B>(&mut self, builder: B) -> DiResult<()>
+        where B: (FnOnce(&Container) -> T) + 'static,
+              T: 'static
+    {
+        let item = DependencyType::Builder(Box::new(builder));
 
         self.insert::<T>(item)
     }
@@ -49,6 +55,72 @@ impl Container {
         let type_id = TypeId::of::<T>();
 
         self.items.borrow().contains_key(&type_id)
+    }
+
+    pub fn get<T: 'static>(&self) -> ResolveResult<T> {
+        let type_id = TypeId::of::<T>();
+        let items = self.items.borrow();
+
+        let item = items.get(&type_id);
+        if item.is_none() {
+            return Err(format!("Type not registered: {:?}", type_id));
+        }
+
+        use DependencyType::*;
+
+        let item = match item.unwrap() {
+            Factory(_) => self.call_factory::<T>(&type_id),
+            Builder(_) => {
+                self.consume_builder::<T>()?;
+                self.get_shared(&type_id)
+            },
+            Shared(_) => self.get_shared(&type_id),
+        };
+
+        let raw = Rc::into_raw(item?);
+
+        // this should be safe, considering proper registration
+        return Ok(unsafe {
+            Rc::<T>::from_raw(raw as *const T)
+        });
+    }
+
+    pub fn call_factory<T: 'static>(&self, type_id: &TypeId) -> IntermediateResult {
+        // we need to downcast the pointer before we use it, but to do that, we have to own it
+        // so we have to remove it from the hash set and then put it back again
+        if let DependencyType::Factory(factory) = self.items.borrow_mut().remove(&type_id).unwrap() {
+            let mut factory = factory.downcast::<Box<Factory<T>>>().unwrap();
+            let item = factory(self);
+
+            let dependency = DependencyType::Factory(Box::new(factory));
+            self.insert::<T>(dependency)?;
+
+            return Ok(Rc::new(item));
+        }
+
+        panic!("Type {:?} not registered as factory", type_id)
+    }
+
+    fn consume_builder<T: 'static>(&self) -> DiResult<()> {
+        let type_id = TypeId::of::<T>();
+
+        if let DependencyType::Builder(builder) = self.items.borrow_mut().remove(&type_id).unwrap() {
+            let builder = builder.downcast::<Box<Builder<T>>>().unwrap();
+            let item = builder(self);
+            let item = DependencyType::Shared(Rc::new(item));
+
+            return self.insert::<T>(item);
+        }
+
+        panic!("Type {:?} not registered as builder", type_id)
+    }
+
+    fn get_shared(&self, type_id: &TypeId) -> IntermediateResult {
+        if let DependencyType::Shared(item) = self.items.borrow().get(&type_id).unwrap() {
+            return Ok(item.clone());
+        }
+
+        panic!("Type {:?} not registered as shared dependency", type_id)
     }
 
     fn insert<T: 'static>(&self, item: DependencyType) -> DiResult<()> {
@@ -73,3 +145,4 @@ fn auto_factory<T>(container: &Container) -> Box<T> {
 
 pub type DiResult<T> = Result<T, String>;
 pub type ResolveResult<T> = DiResult<Rc<T>>;
+type IntermediateResult = DiResult<Rc<dyn Any + 'static>>;
