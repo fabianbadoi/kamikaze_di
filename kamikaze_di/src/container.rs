@@ -6,7 +6,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 pub struct Container {
-    items: RefCell<HashMap<TypeId, DependencyType>>,
+    resolvers: RefCell<HashMap<TypeId, Resolver>>,
 }
 
 // TODO these can be trait aliases, once that feature becomes stable
@@ -14,7 +14,7 @@ pub struct Container {
 pub type Factory<T> = FnMut(&Container) -> T;
 pub type Builder<T> = FnOnce(&Container) -> T;
 
-enum DependencyType {
+enum Resolver {
     Factory(Box<dyn Any>),
     Builder(Box<dyn Any>),
     Shared(Rc<Any>),
@@ -22,51 +22,51 @@ enum DependencyType {
 
 impl Container {
     pub fn register<T: 'static>(&mut self, item: T) -> DiResult<()> {
-        let item = DependencyType::Shared(Rc::new(item));
+        let resolver = Resolver::Shared(Rc::new(item));
 
-        self.insert::<T>(item)
+        self.insert::<T>(resolver)
     }
 
     pub fn register_factory<T, F>(&mut self, factory: F) -> DiResult<()>
         where F: (FnMut(&Container) -> T) + 'static,
               T: 'static
     {
-        let item = DependencyType::Factory(Box::new(factory));
+        let resolver = Resolver::Factory(Box::new(factory));
 
-        self.insert::<T>(item)
+        self.insert::<T>(resolver)
     }
 
     pub fn register_automatic_factory<T: 'static>(&mut self) -> DiResult<()> {
-        let item = DependencyType::Factory(Box::new(|container| auto_factory::<T>(container)));
+        let resolver = Resolver::Factory(Box::new(|container| auto_factory::<T>(container)));
 
-        self.insert::<T>(item)
+        self.insert::<T>(resolver)
     }
 
     pub fn register_builder<T, B>(&mut self, builder: B) -> DiResult<()>
         where B: (FnOnce(&Container) -> T) + 'static,
               T: 'static
     {
-        let item = DependencyType::Builder(Box::new(builder));
+        let resolver = Resolver::Builder(Box::new(builder));
 
-        self.insert::<T>(item)
+        self.insert::<T>(resolver)
     }
 
     pub fn has<T: 'static>(&self) -> bool {
         let type_id = TypeId::of::<T>();
 
-        self.items.borrow().contains_key(&type_id)
+        self.resolvers.borrow().contains_key(&type_id)
     }
 
-    pub fn get<T: 'static>(&self) -> ResolveResult<T> {
+    fn get<T: 'static>(&self) -> ResolveResult<T> {
         let type_id = TypeId::of::<T>();
-        let items = self.items.borrow();
+        let resolvers = self.resolvers.borrow();
 
-        let item = items.get(&type_id);
+        let item = resolvers.get(&type_id);
         if item.is_none() {
             return Err(format!("Type not registered: {:?}", type_id));
         }
 
-        use DependencyType::*;
+        use Resolver::*;
 
         let item = match item.unwrap() {
             Factory(_) => self.call_factory::<T>(&type_id),
@@ -79,21 +79,22 @@ impl Container {
 
         let raw = Rc::into_raw(item?);
 
+        // TODO guard against circular dependencies
         // this should be safe, considering proper registration
         return Ok(unsafe {
             Rc::<T>::from_raw(raw as *const T)
         });
     }
 
-    pub fn call_factory<T: 'static>(&self, type_id: &TypeId) -> IntermediateResult {
+    fn call_factory<T: 'static>(&self, type_id: &TypeId) -> IntermediateResult {
         // we need to downcast the pointer before we use it, but to do that, we have to own it
         // so we have to remove it from the hash set and then put it back again
-        if let DependencyType::Factory(factory) = self.items.borrow_mut().remove(&type_id).unwrap() {
+        if let Resolver::Factory(factory) = self.resolvers.borrow_mut().remove(&type_id).unwrap() {
             let mut factory = factory.downcast::<Box<Factory<T>>>().unwrap();
             let item = factory(self);
 
-            let dependency = DependencyType::Factory(Box::new(factory));
-            self.insert::<T>(dependency)?;
+            let resolver = Resolver::Factory(Box::new(factory));
+            self.insert::<T>(resolver)?;
 
             return Ok(Rc::new(item));
         }
@@ -104,10 +105,10 @@ impl Container {
     fn consume_builder<T: 'static>(&self) -> DiResult<()> {
         let type_id = TypeId::of::<T>();
 
-        if let DependencyType::Builder(builder) = self.items.borrow_mut().remove(&type_id).unwrap() {
+        if let Resolver::Builder(builder) = self.resolvers.borrow_mut().remove(&type_id).unwrap() {
             let builder = builder.downcast::<Box<Builder<T>>>().unwrap();
             let item = builder(self);
-            let item = DependencyType::Shared(Rc::new(item));
+            let item = Resolver::Shared(Rc::new(item));
 
             return self.insert::<T>(item);
         }
@@ -116,21 +117,21 @@ impl Container {
     }
 
     fn get_shared(&self, type_id: &TypeId) -> IntermediateResult {
-        if let DependencyType::Shared(item) = self.items.borrow().get(&type_id).unwrap() {
+        if let Resolver::Shared(item) = self.resolvers.borrow().get(&type_id).unwrap() {
             return Ok(item.clone());
         }
 
         panic!("Type {:?} not registered as shared dependency", type_id)
     }
 
-    fn insert<T: 'static>(&self, item: DependencyType) -> DiResult<()> {
+    fn insert<T: 'static>(&self, resolver: Resolver) -> DiResult<()> {
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
             return Err(format!("Container already has {:?}", type_id));
         }
 
-        self.items.borrow_mut().insert(type_id, item);
+        self.resolvers.borrow_mut().insert(type_id, resolver);
 
         Ok(())
     }
