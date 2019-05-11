@@ -13,22 +13,54 @@ use crate::cycle::CycleStopper;
 /// naturally live on the heap and the garbage collector would
 /// take care of deallocating them.
 ///
-/// In rust, someone must own them. Naturally, this will be
-/// the dependency injection container.
+/// All dependencies will be cloned when resolving. If you would
+/// like to have a shared dependency, use Rc<T>.
 ///
-/// At first thought, returning references would be OK. However,
-/// this may lead to problems when dealing with lifetimes, so we
-/// just return Rc<T> instead.
+/// # Using a shared dependency
 ///
-/// If you need to resolve a trait, use `Box<Trait>`.
+/// ```
+/// # use std::rc::Rc;
+/// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
 ///
+/// // does not implement Clone or Copy
+/// struct Keeper { x: i32 }
+///
+/// let mut builder = ContainerBuilder::new();
+/// builder.register::<Rc<Keeper>>(Rc::new(Keeper{ x: 42 }));
+///
+/// let container = builder.build();
+///
+/// let resolved = container.resolve::<Rc<Keeper>>().unwrap();
+/// assert_eq!((*resolved).x, 42);
+/// ```
+///
+///
+/// # If you need to resolve a trait, use Rc<Trait>.
+///
+/// ```
+/// # use std::rc::Rc;
+/// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
+///
+/// // does not implement Clone or Copy
+/// struct Keeper { x: i32 }
+/// trait XKeeper { fn get_x(&self) -> i32; }
+/// impl XKeeper for Keeper { fn get_x(&self) -> i32 { self.x } }
+///
+/// let mut builder = ContainerBuilder::new();
+/// builder.register::<Rc<XKeeper>>(Rc::new(Keeper{ x: 42 }));
+///
+/// let container = builder.build();
+///
+/// let resolved = container.resolve::<Rc<XKeeper>>().unwrap();
+/// assert_eq!(resolved.get_x(), 42);
+/// ```
 pub trait DependencyResolver {
     /// Resolve a dependency
     ///
     /// # Examples
     ///
     /// ```
-    /// use std::rc::Rc;
+    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -36,10 +68,10 @@ pub trait DependencyResolver {
     ///
     /// let container = builder.build();
     ///
-    /// let resolved: Rc<u32> = container.resolve().unwrap();
-    /// assert_eq!(*resolved, 42);
+    /// let resolved: u32 = container.resolve().unwrap();
+    /// assert_eq!(resolved, 42);
     /// ```
-    fn resolve<T: 'static>(&self) -> ResolveResult<T>;
+    fn resolve<T: Clone + 'static>(&self) -> ResolveResult<T>;
 
     /// Returns true if a dependency is registered
     ///
@@ -84,7 +116,7 @@ pub trait DependencyResolver {
 /// assert!(result_2.is_err());
 ///
 /// let container = builder.build();
-/// assert_eq!(*container.resolve::<u32>().unwrap(), 42);
+/// assert_eq!(container.resolve::<u32>().unwrap(), 42);
 /// ```
 ///
 /// Circular dependencies will cause continer.resolve() to panic:
@@ -97,20 +129,20 @@ pub trait DependencyResolver {
 /// builder.register_factory::<i32, _>(|container| {
 ///     use std::convert::TryInto;
 ///
-///     let base: i64 = *container.resolve().unwrap();
+///     let base: i64 = container.resolve().unwrap();
 ///     let base: i32 = base.try_into().unwrap();
 ///     base - 1
 /// });
 ///
 /// builder.register_factory::<i64, _>(|container| {
-///     let base: i32 = *container.resolve().unwrap();
+///     let base: i32 = container.resolve().unwrap();
 ///     let base: i64 = base.into();
 ///     base - 1
 /// });
 ///
 /// let container = builder.build();
 ///
-/// let forty_one: Rc<i64> = container.resolve().unwrap();
+/// let forty_one: i64 = container.resolve().unwrap();
 /// ```
 pub struct ContainerBuilder {
     resolvers: HashMap<TypeId, Resolver>,
@@ -122,7 +154,7 @@ pub struct Container {
 }
 
 impl DependencyResolver for Container {
-    fn resolve<T: 'static>(&self) -> ResolveResult<T> {
+    fn resolve<T: Clone + 'static>(&self) -> ResolveResult<T> {
         self.get::<T>()
     }
 
@@ -186,18 +218,18 @@ impl ContainerBuilder {
     /// let mut i = 0;
     /// builder.register_factory::<i32, _>(move |container| {
     ///     i += 1;
-    ///     let base: i16 = *container.resolve().unwrap();
+    ///     let base: i16 = container.resolve().unwrap();
     ///     let base: i32 = base.into();
     ///     base - i
     /// });
     ///
     /// let container = builder.build();
     ///
-    /// let forty_two: Rc<i32> = container.resolve().unwrap();
-    /// let forty_one: Rc<i32> = container.resolve().unwrap();
+    /// let forty_two: i32 = container.resolve().unwrap();
+    /// let forty_one: i32 = container.resolve().unwrap();
     ///
-    /// assert_eq!(*forty_two, 42);
-    /// assert_eq!(*forty_one, 41);
+    /// assert_eq!(forty_two, 42);
+    /// assert_eq!(forty_one, 41);
     /// ```
     pub fn register_factory<T, F>(&mut self, factory: F) -> DiResult<()>
         where F: (FnMut(&Container) -> T) + 'static,
@@ -235,24 +267,24 @@ impl ContainerBuilder {
     /// builder.register::<i16>(43);
     ///
     /// builder.register_builder::<i32, _>(|container| {
-    ///     let base: i16 = *container.resolve().unwrap();
+    ///     let base: i16 = container.resolve().unwrap();
     ///     let base: i32 = base.into();
     ///     base - 1
     /// });
     ///
     /// builder.register_builder::<i64, _>(|container| {
-    ///     let base: i32 = *container.resolve().unwrap();
+    ///     let base: i32 = container.resolve().unwrap();
     ///     let base: i64 = base.into();
     ///     base - 1
     /// });
     ///
     /// let container = builder.build();
     ///
-    /// let forty_one: Rc<i64> = container.resolve().unwrap();
-    /// let forty_two: Rc<i32> = container.resolve().unwrap();
+    /// let forty_one: i64 = container.resolve().unwrap();
+    /// let forty_two: i32 = container.resolve().unwrap();
     ///
-    /// assert_eq!(*forty_one, 41);
-    /// assert_eq!(*forty_two, 42);
+    /// assert_eq!(forty_one, 41);
+    /// assert_eq!(forty_two, 42);
     /// ```
     pub fn register_builder<T, B>(&mut self, builder: B) -> DiResult<()>
         where B: (FnOnce(&Container) -> T) + 'static,
@@ -305,11 +337,13 @@ impl Container {
         self.resolvers.borrow().contains_key(&type_id)
     }
 
-    fn get<T: 'static>(&self) -> ResolveResult<T> {
+    fn get<T: Clone + 'static>(&self) -> ResolveResult<T> {
         let item = self.resolve_as_any::<T>()?;
 
         // this should be safe as long as registration is safe
-        Ok(item.downcast::<T>().unwrap())
+        let downcast: Rc<T> = item.downcast::<T>().unwrap();
+
+        Ok((*downcast).clone())
     }
 
     fn resolve_as_any<T: 'static>(&self) -> IntermediateResult {
@@ -401,7 +435,7 @@ enum Resolver {
 }
 
 pub type DiResult<T> = Result<T, String>;
-pub type ResolveResult<T> = DiResult<Rc<T>>;
+pub type ResolveResult<T> = DiResult<T>;
 type IntermediateResult = DiResult<Rc<dyn Any + 'static>>;
 
 enum ResolverType {
@@ -434,19 +468,19 @@ mod tests {
         builder.register_factory::<i32, _>(|container| {
             use std::convert::TryInto;
 
-            let base: i64 = *container.resolve().unwrap();
+            let base: i64 = container.resolve().unwrap();
             let base: i32 = base.try_into().unwrap();
             base - 1
         }).unwrap();
 
         builder.register_factory::<i64, _>(|container| {
-            let base: i32 = *container.resolve().unwrap();
+            let base: i32 = container.resolve().unwrap();
             let base: i64 = base.into();
             base - 1
         }).unwrap();
 
         let container = builder.build();
 
-        let forty_one: Rc<i64> = container.resolve().unwrap();
+        container.resolve::<i32>().unwrap();
     }
 }
