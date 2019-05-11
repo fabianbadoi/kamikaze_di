@@ -1,6 +1,5 @@
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::cell::RefCell;
 
 use crate::cycle::CycleStopper;
@@ -60,7 +59,6 @@ pub trait DependencyResolver {
     /// # Examples
     ///
     /// ```
-    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -71,14 +69,13 @@ pub trait DependencyResolver {
     /// let resolved: u32 = container.resolve().unwrap();
     /// assert_eq!(resolved, 42);
     /// ```
-    fn resolve<T: Clone + 'static>(&self) -> ResolveResult<T>;
+    fn resolve<T: Clone + 'static>(&self) -> Result<T>;
 
     /// Returns true if a dependency is registered
     ///
     /// # Examples
     ///
     /// ```
-    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -105,7 +102,6 @@ pub trait DependencyResolver {
 /// # Examples
 ///
 /// ```
-/// use std::rc::Rc;
 /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
 ///
 /// let mut builder = ContainerBuilder::new();
@@ -121,7 +117,6 @@ pub trait DependencyResolver {
 ///
 /// Circular dependencies will cause continer.resolve() to panic:
 /// ```should_panic
-/// # use std::rc::Rc;
 /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
 ///
 /// let mut builder = ContainerBuilder::new();
@@ -154,7 +149,7 @@ pub struct Container {
 }
 
 impl DependencyResolver for Container {
-    fn resolve<T: Clone + 'static>(&self) -> ResolveResult<T> {
+    fn resolve<T: Clone + 'static>(&self) -> Result<T> {
         self.get::<T>()
     }
 
@@ -188,7 +183,6 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -196,8 +190,8 @@ impl ContainerBuilder {
     ///
     /// assert!(result.is_ok());
     /// ```
-    pub fn register<T: 'static>(&mut self, item: T) -> DiResult<()> {
-        let resolver = Resolver::Shared(Rc::new(item));
+    pub fn register<T: 'static>(&mut self, item: T) -> Result<()> {
+        let resolver = Resolver::Shared(Box::new(item));
 
         self.insert::<T>(resolver)
     }
@@ -209,7 +203,6 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -231,7 +224,7 @@ impl ContainerBuilder {
     /// assert_eq!(forty_two, 42);
     /// assert_eq!(forty_one, 41);
     /// ```
-    pub fn register_factory<T, F>(&mut self, factory: F) -> DiResult<()>
+    pub fn register_factory<T, F>(&mut self, factory: F) -> Result<()>
         where F: (FnMut(&Container) -> T) + 'static,
               T: 'static
     {
@@ -245,7 +238,7 @@ impl ContainerBuilder {
         self.insert::<T>(resolver)
     }
 
-    pub fn register_automatic_factory<T: 'static>(&mut self) -> DiResult<()> {
+    pub fn register_automatic_factory<T: 'static>(&mut self) -> Result<()> {
         //let resolver = Resolver::Factory(Box::new(|container| auto_factory::<T>(container)));
 
         //self.insert::<T>(resolver)
@@ -260,7 +253,6 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -286,7 +278,7 @@ impl ContainerBuilder {
     /// assert_eq!(forty_one, 41);
     /// assert_eq!(forty_two, 42);
     /// ```
-    pub fn register_builder<T, B>(&mut self, builder: B) -> DiResult<()>
+    pub fn register_builder<T, B>(&mut self, builder: B) -> Result<()>
         where B: (FnOnce(&Container) -> T) + 'static,
               T: 'static
     {
@@ -302,7 +294,6 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use std::rc::Rc;
     /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
     /// let mut builder = ContainerBuilder::new();
@@ -317,7 +308,7 @@ impl ContainerBuilder {
         self.resolvers.contains_key(&type_id)
     }
 
-    fn insert<T: 'static>(&mut self, resolver: Resolver) -> DiResult<()> {
+    fn insert<T: 'static>(&mut self, resolver: Resolver) -> Result<()> {
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
@@ -337,16 +328,11 @@ impl Container {
         self.resolvers.borrow().contains_key(&type_id)
     }
 
-    fn get<T: Clone + 'static>(&self) -> ResolveResult<T> {
-        let item = self.resolve_as_any::<T>()?;
-
-        // this should be safe as long as registration is safe
-        let downcast: Rc<T> = item.downcast::<T>().unwrap();
-
-        Ok((*downcast).clone())
+    fn get<T: Clone + 'static>(&self) -> Result<T> {
+        self.resolve_as_any::<T>()
     }
 
-    fn resolve_as_any<T: 'static>(&self) -> IntermediateResult {
+    fn resolve_as_any<T: Clone + 'static>(&self) -> Result<T> {
         let type_id = TypeId::of::<T>();
         let _guard = self.cycle_stopper.track(type_id);
 
@@ -369,20 +355,20 @@ impl Container {
             .map(|r| r.into())
     }
 
-    fn call_factory<T: 'static>(&self, type_id: &TypeId) -> IntermediateResult {
+    fn call_factory<T: 'static>(&self, type_id: &TypeId) -> Result<T> {
         if let Resolver::Factory(cell) = self.resolvers.borrow().get(&type_id).unwrap() {
             let mut boxed = cell.borrow_mut();
             let factory = boxed.downcast_mut::<Box<Factory<T>>>().unwrap();
 
             let item = factory(self);
 
-            return Ok(Rc::new(item));
+            return Ok(item);
         }
 
         panic!("Type {:?} not registered as factory", type_id)
     }
 
-    fn consume_builder<T: 'static>(&self) -> DiResult<()> {
+    fn consume_builder<T: 'static>(&self) -> Result<()> {
         let type_id = TypeId::of::<T>();
 
         let builder = if let Resolver::Builder(boxed) = self.resolvers.borrow_mut().remove(&type_id).unwrap() {
@@ -392,20 +378,25 @@ impl Container {
         };
 
         let item = builder(self);
-        let resolver = Resolver::Shared(Rc::new(item));
+        let resolver = Resolver::Shared(Box::new(item));
 
         return self.insert::<T>(resolver);
     }
 
-    fn get_shared(&self, type_id: &TypeId) -> IntermediateResult {
-        if let Resolver::Shared(item) = self.resolvers.borrow().get(&type_id).unwrap() {
-            return Ok(item.clone());
+    fn get_shared<T: Clone + 'static>(&self, type_id: &TypeId) -> Result<T> {
+        if let Resolver::Shared(boxed_any) = self.resolvers.borrow().get(&type_id).unwrap() {
+            use std::borrow::Borrow;
+
+            let borrowed_any: &Any = boxed_any.borrow();
+            let borrowed_item: &T = borrowed_any.downcast_ref().unwrap();
+
+            return Ok(borrowed_item.clone());
         }
 
         panic!("Type {:?} not registered as shared dependency", type_id)
     }
 
-    fn insert<T: 'static>(&self, resolver: Resolver) -> DiResult<()> {
+    fn insert<T: 'static>(&self, resolver: Resolver) -> Result<()> {
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
@@ -431,12 +422,10 @@ enum Resolver {
     /// calls. Thus we must use RefCell.
     Factory(RefCell<Box<Any>>),
     Builder(Box<Any>),
-    Shared(Rc<Any>),
+    Shared(Box<Any>),
 }
 
-pub type DiResult<T> = Result<T, String>;
-pub type ResolveResult<T> = DiResult<T>;
-type IntermediateResult = DiResult<Rc<dyn Any + 'static>>;
+pub type Result<T> = std::result::Result<T, String>;
 
 enum ResolverType {
     Factory,
