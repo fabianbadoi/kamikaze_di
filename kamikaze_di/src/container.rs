@@ -308,16 +308,8 @@ impl Container {
     fn get<T: 'static>(&self) -> ResolveResult<T> {
         let item = self.resolve_as_any::<T>()?;
 
-        Self::downcast::<T>(item)
-    }
-
-    fn downcast<T: 'static>(item: Rc<Any>) -> ResolveResult<T> {
-        let raw = Rc::into_raw(item);
-
         // this should be safe as long as registration is safe
-        Ok(unsafe {
-            Rc::<T>::from_raw(raw as *const T)
-        })
+        Ok(item.downcast::<T>().unwrap())
     }
 
     fn resolve_as_any<T: 'static>(&self) -> IntermediateResult {
