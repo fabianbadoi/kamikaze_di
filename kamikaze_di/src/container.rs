@@ -1,5 +1,3 @@
-#![feature(specialization)]
-
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::rc::Rc;
