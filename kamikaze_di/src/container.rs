@@ -20,22 +20,40 @@ use std::cell::RefCell;
 ///
 /// If you need to resolve a trait, use `Box<Trait>`.
 ///
-pub trait DependencyResolver<T: 'static> {
+pub trait DependencyResolver {
     /// Resolve a dependency
     ///
     /// # Examples
     ///
     /// ```
     /// use std::rc::Rc;
-    /// use kamikaze_di::{Container, DependencyResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
-    /// let mut container = Container::new();
-    /// container.register::<u32>(42);
+    /// let mut builder = ContainerBuilder::new();
+    /// builder.register::<u32>(42);
+    ///
+    /// let container = builder.build();
     ///
     /// let resolved: Rc<u32> = container.resolve().unwrap();
     /// assert_eq!(*resolved, 42);
     /// ```
-    fn resolve(&self) -> ResolveResult<T>;
+    fn resolve<T: 'static>(&self) -> ResolveResult<T>;
+
+    /// Returns true if a dependency is registered
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::rc::Rc;
+    /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
+    ///
+    /// let mut builder = ContainerBuilder::new();
+    /// builder.register::<i16>(43);
+    ///
+    /// assert!(builder.has::<i16>());
+    /// assert!(!builder.has::<i32>());
+    /// ```
+    fn has<T: 'static>(&self) -> bool;
 }
 
 /// DependencyResolver implementor
@@ -54,22 +72,33 @@ pub trait DependencyResolver<T: 'static> {
 ///
 /// ```
 /// use std::rc::Rc;
-/// use kamikaze_di::{Container, DependencyResolver};
+/// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
 ///
-/// let mut container = Container::new();
-/// let result_1 = container.register::<u32>(42);
-/// let result_2 = container.register::<u32>(43);
+/// let mut builder = ContainerBuilder::new();
+/// let result_1 = builder.register::<u32>(42);
+/// let result_2 = builder.register::<u32>(43);
 ///
 /// assert!(result_1.is_ok());
 /// assert!(result_2.is_err());
+///
+/// let container = builder.build();
+/// assert_eq!(*container.resolve::<u32>().unwrap(), 42);
 /// ```
+pub struct ContainerBuilder {
+    resolvers: HashMap<TypeId, Resolver>,
+}
+
 pub struct Container {
     resolvers: RefCell<HashMap<TypeId, Resolver>>,
 }
 
-impl<T: 'static> DependencyResolver<T> for Container {
-    fn resolve(&self) -> ResolveResult<T> {
+impl DependencyResolver for Container {
+    fn resolve<T: 'static>(&self) -> ResolveResult<T> {
         self.get::<T>()
+    }
+
+    fn has<T: 'static>(&self) -> bool {
+        self.has::<T>()
     }
 }
 
@@ -79,11 +108,15 @@ pub type Factory<T> = FnMut(&Container) -> T;
 /// Builders will only be called once
 pub type Builder<T> = FnOnce(&Container) -> T;
 
-impl Container {
-    pub fn new() -> Container {
-        Container {
-            resolvers: RefCell::new(Default::default())
+impl ContainerBuilder {
+    pub fn new() -> ContainerBuilder {
+        ContainerBuilder {
+            resolvers: Default::default()
         }
+    }
+
+    pub fn build(self) -> Container {
+        Container { resolvers: RefCell::new(self.resolvers) }
     }
 
     /// Registeres a dependency directly
@@ -92,10 +125,10 @@ impl Container {
     ///
     /// ```
     /// # use std::rc::Rc;
-    /// # use kamikaze_di::{Container, DependencyResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
-    /// let mut container = Container::new();
-    /// let result = container.register::<u32>(42);
+    /// let mut builder = ContainerBuilder::new();
+    /// let result = builder.register::<u32>(42);
     ///
     /// assert!(result.is_ok());
     /// ```
@@ -113,18 +146,20 @@ impl Container {
     ///
     /// ```
     /// # use std::rc::Rc;
-    /// # use kamikaze_di::{Container, DependencyResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
-    /// let mut container = Container::new();
-    /// container.register::<i16>(43);
+    /// let mut builder = ContainerBuilder::new();
+    /// builder.register::<i16>(43);
     ///
     /// let mut i = 0;
-    /// container.register_factory::<i32, _>(move |container| {
+    /// builder.register_factory::<i32, _>(move |container| {
     ///     i += 1;
     ///     let base: i16 = *container.resolve().unwrap();
     ///     let base: i32 = base.into();
     ///     base - i
     /// });
+    ///
+    /// let container = builder.build();
     ///
     /// let forty_two: Rc<i32> = container.resolve().unwrap();
     /// let forty_one: Rc<i32> = container.resolve().unwrap();
@@ -162,22 +197,25 @@ impl Container {
     ///
     /// ```
     /// # use std::rc::Rc;
-    /// # use kamikaze_di::{Container, DependencyResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
-    /// let mut container = Container::new();
-    /// container.register::<i16>(43);
+    /// let mut builder = ContainerBuilder::new();
+    /// builder.register::<i16>(43);
     ///
-    /// container.register_builder::<i32, _>(|container| {
+    /// builder.register_builder::<i32, _>(|container| {
     ///     let base: i16 = *container.resolve().unwrap();
     ///     let base: i32 = base.into();
     ///     base - 1
     /// });
     ///
-    /// container.register_builder::<i64, _>(|container| {
+    /// builder.register_builder::<i64, _>(|container| {
     ///     let base: i32 = *container.resolve().unwrap();
     ///     let base: i64 = base.into();
     ///     base - 1
     /// });
+    ///
+    /// let container = builder.build();
+    ///
     /// let forty_one: Rc<i64> = container.resolve().unwrap();
     /// let forty_two: Rc<i32> = container.resolve().unwrap();
     ///
@@ -201,15 +239,35 @@ impl Container {
     ///
     /// ```
     /// # use std::rc::Rc;
-    /// # use kamikaze_di::{Container, DependencyResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
     ///
-    /// let mut container = Container::new();
-    /// container.register::<i16>(43);
+    /// let mut builder = ContainerBuilder::new();
+    /// builder.register::<i16>(43);
     ///
-    /// assert!(container.has::<i16>());
-    /// assert!(!container.has::<i32>());
+    /// assert!(builder.has::<i16>());
+    /// assert!(!builder.has::<i32>());
     /// ```
     pub fn has<T: 'static>(&self) -> bool {
+        let type_id = TypeId::of::<T>();
+
+        self.resolvers.contains_key(&type_id)
+    }
+
+    fn insert<T: 'static>(&mut self, resolver: Resolver) -> DiResult<()> {
+        let type_id = TypeId::of::<T>();
+
+        if self.has::<T>() {
+            return Err(format!("Container already has {:?}", type_id));
+        }
+
+        self.resolvers.insert(type_id, resolver);
+
+        Ok(())
+    }
+}
+
+impl Container {
+    fn has<T: 'static>(&self) -> bool {
         let type_id = TypeId::of::<T>();
 
         self.resolvers.borrow().contains_key(&type_id)
@@ -315,7 +373,6 @@ enum Resolver {
     Factory(RefCell<Box<Any>>),
     Builder(Box<Any>),
     Shared(Rc<Any>),
-    // TODO maybe those can be Box/RC<Any>
 }
 
 pub type DiResult<T> = Result<T, String>;
