@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 
+use crate::cycle::CycleStopper;
+
 /// Dependencies have to be registered beforehand, how you do
 /// that depends on the implementing type.
 ///
@@ -84,12 +86,39 @@ pub trait DependencyResolver {
 /// let container = builder.build();
 /// assert_eq!(*container.resolve::<u32>().unwrap(), 42);
 /// ```
+///
+/// Circular dependencies will cause continer.resolve() to panic:
+/// ```should_panic
+/// # use std::rc::Rc;
+/// # use kamikaze_di::{Container, ContainerBuilder, DependencyResolver};
+///
+/// let mut builder = ContainerBuilder::new();
+///
+/// builder.register_factory::<i32, _>(|container| {
+///     use std::convert::TryInto;
+///
+///     let base: i64 = *container.resolve().unwrap();
+///     let base: i32 = base.try_into().unwrap();
+///     base - 1
+/// });
+///
+/// builder.register_factory::<i64, _>(|container| {
+///     let base: i32 = *container.resolve().unwrap();
+///     let base: i64 = base.into();
+///     base - 1
+/// });
+///
+/// let container = builder.build();
+///
+/// let forty_one: Rc<i64> = container.resolve().unwrap();
+/// ```
 pub struct ContainerBuilder {
     resolvers: HashMap<TypeId, Resolver>,
 }
 
 pub struct Container {
     resolvers: RefCell<HashMap<TypeId, Resolver>>,
+    cycle_stopper: CycleStopper,
 }
 
 impl DependencyResolver for Container {
@@ -116,7 +145,10 @@ impl ContainerBuilder {
     }
 
     pub fn build(self) -> Container {
-        Container { resolvers: RefCell::new(self.resolvers) }
+        Container {
+            resolvers: RefCell::new(self.resolvers),
+            cycle_stopper: CycleStopper::default(),
+        }
     }
 
     /// Registeres a dependency directly
@@ -290,6 +322,7 @@ impl Container {
 
     fn resolve_as_any<T: 'static>(&self) -> IntermediateResult {
         let type_id = TypeId::of::<T>();
+        let _guard = self.cycle_stopper.track(type_id);
 
         let resolver_type = self.get_resolver_type(&type_id);
 
@@ -394,5 +427,34 @@ impl From<&Resolver> for ResolverType {
             Resolver::Builder(_) => Builder,
             Resolver::Shared(_) => Shared,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "Circular dependency")]
+    fn panics_on_circular_dendencies() {
+        let mut builder = ContainerBuilder::new();
+
+        builder.register_factory::<i32, _>(|container| {
+            use std::convert::TryInto;
+
+            let base: i64 = *container.resolve().unwrap();
+            let base: i32 = base.try_into().unwrap();
+            base - 1
+        }).unwrap();
+
+        builder.register_factory::<i64, _>(|container| {
+            let base: i32 = *container.resolve().unwrap();
+            let base: i64 = base.into();
+            base - 1
+        }).unwrap();
+
+        let container = builder.build();
+
+        let forty_one: Rc<i64> = container.resolve().unwrap();
     }
 }
