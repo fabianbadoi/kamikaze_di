@@ -1,11 +1,11 @@
-mod omni_resolver;
+pub mod omni_resolver;
 
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::cell::RefCell;
 
+use crate::Result;
 use crate::cycle::CycleStopper;
-pub use omni_resolver::*;
 
 /// Dependency container builder
 ///
@@ -338,8 +338,6 @@ enum Resolver {
     Shared(Box<Any>),
 }
 
-pub type Result<T> = std::result::Result<T, String>;
-
 enum ResolverType {
     Factory,
     Builder,
@@ -361,6 +359,7 @@ impl From<&Resolver> for ResolverType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::OmniResolver;
 
     #[test]
     #[should_panic(expected = "Circular dependency")]
