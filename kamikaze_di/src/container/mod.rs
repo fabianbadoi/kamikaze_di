@@ -1,4 +1,5 @@
 pub mod omni_resolver;
+pub mod auto_resolver;
 
 mod cycle;
 
