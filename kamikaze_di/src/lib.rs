@@ -1,6 +1,5 @@
 #![feature(specialization)]
 
-mod cycle;
 mod container;
 
 pub use container::{Container, ContainerBuilder};

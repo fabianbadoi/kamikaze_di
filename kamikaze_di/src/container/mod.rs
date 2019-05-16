@@ -1,11 +1,13 @@
 pub mod omni_resolver;
 
+mod cycle;
+
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::cell::RefCell;
 
 use crate::Result;
-use crate::cycle::CycleStopper;
+use cycle::CycleStopper;
 
 /// Dependency container builder
 ///
