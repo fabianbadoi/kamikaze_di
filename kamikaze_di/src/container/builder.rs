@@ -4,7 +4,7 @@ use std::cell::RefCell;
 
 use crate::Result;
 use super::cycle::CycleStopper;
-use super::auto_resolver::Resolvable;
+use super::auto_resolver::Resolve;
 
 use super::{Container, Resolver};
 
@@ -144,13 +144,13 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver, Resolvable, Result};
+    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver, Resolve, Result};
     /// # use std::rc::Rc;
     /// #
     /// #[derive(Clone)]
     /// struct X {}
-    /// impl Resolvable for X {
-    ///     fn resolve_from(container: &Container) -> Result<Self> {
+    /// impl Resolve for X {
+    ///     fn resolve(container: &Container) -> Result<Self> {
     ///         Ok(X {})
     ///     }
     /// }
@@ -163,7 +163,7 @@ impl ContainerBuilder {
     /// let x1 = container.resolve::<X>().unwrap();
     /// let x2 = container.resolve::<X>().unwrap();
     /// ```
-    pub fn register_automatic_factory<T: Resolvable + 'static>(&mut self) -> Result<()> {
+    pub fn register_automatic_factory<T: Resolve + 'static>(&mut self) -> Result<()> {
         self.register_factory(auto_factory::<T>)
     }
 
@@ -246,6 +246,6 @@ impl ContainerBuilder {
     }
 }
 
-fn auto_factory<T: Resolvable>(container: &Container) -> T {
-    T::resolve_from(container).unwrap()
+fn auto_factory<T: Resolve>(container: &Container) -> T {
+    T::resolve(container).unwrap()
 }

@@ -4,7 +4,7 @@ use crate::container::{Container};
 /// This trait allows the container to resolve some types without
 /// them having to be registered beforehand.
 ///
-/// See the Resolvable trait for examples.
+/// See the Resolve trait for examples.
 pub trait AutoResolver<T> {
     fn resolve(&self) -> Result<T>;
 }
@@ -15,13 +15,13 @@ pub trait AutoResolver<T> {
 /// # Examples
 ///
 /// ```
-/// use kamikaze_di::{Result, Container, ContainerBuilder, Resolvable, AutoResolver};
+/// use kamikaze_di::{Result, Container, ContainerBuilder, Resolve, AutoResolver};
 ///
 /// #[derive(Clone)]
 /// struct Point { x: i32, y: i32 }
 ///
-/// impl Resolvable for Point {
-///     fn resolve_from(container: &Container) -> Result<Self> {
+/// impl Resolve for Point {
+///     fn resolve(container: &Container) -> Result<Self> {
 ///         // You can use the container here.
 ///         // As long as the compile can figure out the type you want,
 ///         // it will do the right thing.
@@ -39,8 +39,8 @@ pub trait AutoResolver<T> {
 /// assert_eq!(42, point.x);
 /// assert_eq!( 5, point.y);
 /// ```
-pub trait Resolvable where Self: Sized {
-    fn resolve_from(container: &Container) -> Result<Self>;
+pub trait Resolve where Self: Sized {
+    fn resolve(container: &Container) -> Result<Self>;
 }
 
 impl<T> AutoResolver<T> for Container where T: Clone + 'static {
@@ -49,10 +49,18 @@ impl<T> AutoResolver<T> for Container where T: Clone + 'static {
     }
 }
 
-impl<T> AutoResolver<T> for Container where T: Resolvable + Clone + 'static {
+// This would be amazing
+//use std::convert::TryFrom;
+//impl<T> TryFrom<Container> for T where T: Resolve {
+//    fn from(other: &Container) -> Result<T> {
+//        AutoResolver::<T>::resolve(other)
+//    }
+//}
+
+impl<T> AutoResolver<T> for Container where T: Resolve + Clone + 'static {
     fn resolve(&self) -> Result<T> {
         if !self.has::<T>() {
-            let item = T::resolve_from(self)?;
+            let item = T::resolve(self)?;
 
             use super::Resolver;
             let resolver = Resolver::Shared(Box::new(item));
@@ -67,21 +75,21 @@ impl<T> AutoResolver<T> for Container where T: Resolvable + Clone + 'static {
 #[cfg(test)]
 mod tests {
     use crate::{Result, ContainerBuilder, Container};
-    use super::{Resolvable, AutoResolver};
+    use super::{Resolve, AutoResolver};
 
     #[derive(Clone)]
     struct X { inner: i32 }
     #[derive(Clone)]
     struct Y { x: X }
 
-    impl Resolvable for Y {
-        fn resolve_from(container: &Container) -> Result<Self> {
+    impl Resolve for Y {
+        fn resolve(container: &Container) -> Result<Self> {
             Ok(Y { x: container.resolve()? })
         }
     }
 
-    impl Resolvable for X {
-        fn resolve_from(_: &Container) -> Result<Self> {
+    impl Resolve for X {
+        fn resolve(_: &Container) -> Result<Self> {
             Ok(X { inner: 42 })
         }
     }
@@ -110,8 +118,8 @@ mod tests {
 
         #[derive(Clone)]
         struct A { inner: Rc<usize> }
-        impl Resolvable for A {
-            fn resolve_from(container: &Container) -> Result<A> {
+        impl Resolve for A {
+            fn resolve(container: &Container) -> Result<A> {
                 Ok(A { inner: container.resolve()? })
             }
         }
@@ -126,7 +134,7 @@ mod tests {
 
 
 		// the inner rc was cloned:
-		// - once in resolve_from when calling resolve() => strong count of inner is 2
+		// - once in resolve() when calling resolve() => strong count of inner is 2
 		// - once more because more when cloning A on the first resolve => 3
 		// - a third time when resolving A again => 4
         let a1_was_cloned = Rc::strong_count(&a1.inner) == 4;
@@ -139,8 +147,8 @@ mod tests {
 
         #[derive(Clone)]
         struct A { inner: Rc<usize> }
-        impl Resolvable for A {
-            fn resolve_from(container: &Container) -> Result<A> {
+        impl Resolve for A {
+            fn resolve(container: &Container) -> Result<A> {
                 Ok(A { inner: container.resolve()? })
             }
         }
@@ -156,7 +164,7 @@ mod tests {
 
 
 		// the inner rc was cloned:
-		// - once in resolve_from when calling resolve() => strong count of inner is 2
+		// - once in resolve() when calling resolve() => strong count of inner is 2
 		// - once more because more when cloning A on the first resolve => 3
         let a1_was_not_cloned = Rc::strong_count(&a1.inner) == 3;
         assert!(a1_was_not_cloned);
