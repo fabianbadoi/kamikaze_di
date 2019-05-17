@@ -1,0 +1,2 @@
+[workspace]
+members = ["kamikaze_di", "kamikaze_di_derive"]

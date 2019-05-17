@@ -126,6 +126,7 @@ mod tests {
 
         assert_eq!(42, y.x.inner);
     }
+
     #[test]
     fn resolvables_get_stored() {
         use std::rc::Rc;

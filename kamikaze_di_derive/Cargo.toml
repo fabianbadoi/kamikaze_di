@@ -1,0 +1,15 @@
+[package]
+name = "kamikaze_di_derive"
+version = "0.1.0"
+authors = ["Fabian Badoi <fabianbadoi@gmail.com>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "^0.6"
+syn = "^0.15"
+
+[dev-dependencies]
+kamikaze_di = { path = "../kamikaze_di" }
