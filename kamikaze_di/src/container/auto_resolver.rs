@@ -51,14 +51,22 @@ impl<T> AutoResolver<T> for Container where T: Clone + 'static {
 
 impl<T> AutoResolver<T> for Container where T: Resolvable + Clone + 'static {
     fn resolve(&self) -> Result<T> {
-        T::resolve_from(self)
+        if !self.has::<T>() {
+            let item = T::resolve_from(self)?;
+
+            use super::Resolver;
+            let resolver = Resolver::Shared(Box::new(item));
+
+            self.insert::<T>(resolver)?;
+        }
+
+        self.get()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Result;
-    use crate::container::{ContainerBuilder, Container};
+    use crate::{Result, ContainerBuilder, Container};
     use super::{Resolvable, AutoResolver};
 
     #[derive(Clone)]
@@ -95,5 +103,62 @@ mod tests {
         let y: Y = container.resolve().expect("expected a value for Y");
 
         assert_eq!(42, y.x.inner);
+    }
+    #[test]
+    fn resolvables_get_stored() {
+        use std::rc::Rc;
+
+        #[derive(Clone)]
+        struct A { inner: Rc<usize> }
+        impl Resolvable for A {
+            fn resolve_from(container: &Container) -> Result<A> {
+                Ok(A { inner: container.resolve()? })
+            }
+        }
+
+        let mut builder = ContainerBuilder::new();
+        builder.register::<Rc<usize>>(Rc::new(42)).unwrap();
+
+        let container = builder.build();
+
+        let a1: A = container.resolve().unwrap();
+        let _a2: A = container.resolve().unwrap();
+
+
+		// the inner rc was cloned:
+		// - once in resolve_from when calling resolve() => strong count of inner is 2
+		// - once more because more when cloning A on the first resolve => 3
+		// - a third time when resolving A again => 4
+        let a1_was_cloned = Rc::strong_count(&a1.inner) == 4;
+        assert!(a1_was_cloned);
+    }
+
+    #[test]
+    fn test_resolvable_interaction_with_auto_factory() {
+        use std::rc::Rc;
+
+        #[derive(Clone)]
+        struct A { inner: Rc<usize> }
+        impl Resolvable for A {
+            fn resolve_from(container: &Container) -> Result<A> {
+                Ok(A { inner: container.resolve()? })
+            }
+        }
+
+        let mut builder = ContainerBuilder::new();
+        builder.register::<Rc<usize>>(Rc::new(42)).unwrap();
+        builder.register_automatic_factory::<A>().unwrap();
+
+        let container = builder.build();
+
+        let a1: A = container.resolve().unwrap();
+        let _a2: A = container.resolve().unwrap();
+
+
+		// the inner rc was cloned:
+		// - once in resolve_from when calling resolve() => strong count of inner is 2
+		// - once more because more when cloning A on the first resolve => 3
+        let a1_was_not_cloned = Rc::strong_count(&a1.inner) == 3;
+        assert!(a1_was_not_cloned);
     }
 }
