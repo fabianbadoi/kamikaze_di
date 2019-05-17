@@ -9,6 +9,7 @@ use std::cell::RefCell;
 
 use crate::Result;
 use cycle::CycleStopper;
+use auto_resolver::Resolvable;
 
 /// Dependency container builder
 ///
@@ -151,11 +152,33 @@ impl ContainerBuilder {
         self.insert::<T>(resolver)
     }
 
-    pub fn register_automatic_factory<T: 'static>(&mut self) -> Result<()> {
-        //let resolver = Resolver::Factory(Box::new(|container| auto_factory::<T>(container)));
-
-        //self.insert::<T>(resolver)
-        unimplemented!("This will be implemented later")
+    /// Makes the container **not** reuse this type. Every call to get() will
+    /// give you a new instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver, Resolvable, Result};
+    /// # use std::rc::Rc;
+    /// #
+    /// #[derive(Clone)]
+    /// struct X {}
+    /// impl Resolvable for X {
+    ///     fn resolve_from(container: &Container) -> Result<Self> {
+    ///         Ok(X {})
+    ///     }
+    /// }
+    /// let mut builder = ContainerBuilder::new();
+    /// builder.register::<Rc<usize>>(Rc::new(42));
+    /// builder.register_automatic_factory::<X>();
+    ///
+    /// let container = builder.build();
+    ///
+    /// let x1 = container.resolve::<X>().unwrap();
+    /// let x2 = container.resolve::<X>().unwrap();
+    /// ```
+    pub fn register_automatic_factory<T: Resolvable + 'static>(&mut self) -> Result<()> {
+        self.register_factory(auto_factory::<T>)
     }
 
     /// Registers a builder.
@@ -325,8 +348,8 @@ impl Container {
     }
 }
 
-fn auto_factory<T>(container: &Container) -> Box<T> {
-    unimplemented!()
+fn auto_factory<T: Resolvable>(container: &Container) -> T {
+    T::resolve_from(container).unwrap()
 }
 
 enum Resolver {
