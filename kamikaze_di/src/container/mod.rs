@@ -1,12 +1,12 @@
-pub mod omni_resolver;
 pub mod auto_resolver;
 pub mod builder;
+pub mod omni_resolver;
 
 mod cycle;
 
 use std::any::{Any, TypeId};
-use std::collections::HashMap;
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 use crate::Result;
 use cycle::CycleStopper;
@@ -31,10 +31,6 @@ impl Container {
     }
 
     fn get<T: Clone + 'static>(&self) -> Result<T> {
-        self.resolve_as_any::<T>()
-    }
-
-    fn resolve_as_any<T: Clone + 'static>(&self) -> Result<T> {
         let type_id = TypeId::of::<T>();
         let _guard = self.cycle_stopper.track(type_id);
 
@@ -45,16 +41,14 @@ impl Container {
             Some(ResolverType::Builder) => {
                 self.consume_builder::<T>()?;
                 self.get_shared(&type_id)
-            },
+            }
             Some(ResolverType::Shared) => self.get_shared(&type_id),
             None => Err(format!("Type not registered: {:?}", type_id)),
         }
     }
 
     fn get_resolver_type(&self, type_id: &TypeId) -> Option<ResolverType> {
-        self.resolvers.borrow()
-            .get(type_id)
-            .map(|r| r.into())
+        self.resolvers.borrow().get(type_id).map(|r| r.into())
     }
 
     fn call_factory<T: 'static>(&self, type_id: &TypeId) -> Result<T> {
@@ -73,7 +67,9 @@ impl Container {
     fn consume_builder<T: 'static>(&self) -> Result<()> {
         let type_id = TypeId::of::<T>();
 
-        let builder = if let Resolver::Builder(boxed) = self.resolvers.borrow_mut().remove(&type_id).unwrap() {
+        let builder = if let Resolver::Builder(boxed) =
+            self.resolvers.borrow_mut().remove(&type_id).unwrap()
+        {
             boxed.downcast::<Box<Builder<T>>>().unwrap()
         } else {
             panic!("Type {:?} not registered as builder", type_id)
@@ -151,19 +147,23 @@ mod tests {
     fn panics_on_circular_dendencies() {
         let mut builder = ContainerBuilder::new();
 
-        builder.register_factory::<i32, _>(|container| {
-            use std::convert::TryInto;
+        builder
+            .register_factory::<i32, _>(|container| {
+                use std::convert::TryInto;
 
-            let base: i64 = container.resolve().unwrap();
-            let base: i32 = base.try_into().unwrap();
-            base - 1
-        }).unwrap();
+                let base: i64 = container.resolve().unwrap();
+                let base: i32 = base.try_into().unwrap();
+                base - 1
+            })
+            .unwrap();
 
-        builder.register_factory::<i64, _>(|container| {
-            let base: i32 = container.resolve().unwrap();
-            let base: i64 = base.into();
-            base - 1
-        }).unwrap();
+        builder
+            .register_factory::<i64, _>(|container| {
+                let base: i32 = container.resolve().unwrap();
+                let base: i64 = base.into();
+                base - 1
+            })
+            .unwrap();
 
         let container = builder.build();
 

@@ -1,10 +1,10 @@
 use std::any::{Any, TypeId};
-use std::collections::HashMap;
 use std::cell::RefCell;
+use std::collections::HashMap;
 
-use crate::Result;
-use super::cycle::CycleStopper;
 use super::auto_resolver::Resolve;
+use super::cycle::CycleStopper;
+use crate::Result;
 
 use super::{Container, Resolver};
 
@@ -67,7 +67,7 @@ pub struct ContainerBuilder {
 impl ContainerBuilder {
     pub fn new() -> ContainerBuilder {
         ContainerBuilder {
-            resolvers: Default::default()
+            resolvers: Default::default(),
         }
     }
 
@@ -125,8 +125,9 @@ impl ContainerBuilder {
     /// assert_eq!(forty_one, 41);
     /// ```
     pub fn register_factory<T, F>(&mut self, factory: F) -> Result<()>
-        where F: (FnMut(&Container) -> T) + 'static,
-              T: 'static
+    where
+        F: (FnMut(&Container) -> T) + 'static,
+        T: 'static,
     {
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
@@ -201,8 +202,9 @@ impl ContainerBuilder {
     /// assert_eq!(forty_two, 42);
     /// ```
     pub fn register_builder<T, B>(&mut self, builder: B) -> Result<()>
-        where B: (FnOnce(&Container) -> T) + 'static,
-              T: 'static
+    where
+        B: (FnOnce(&Container) -> T) + 'static,
+        T: 'static,
     {
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box

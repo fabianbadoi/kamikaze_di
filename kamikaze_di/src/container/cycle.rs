@@ -14,22 +14,21 @@ impl CycleStopper {
         if tracked.contains(&type_id) {
             panic!(
                 "Circular dependency detected when resolving {:#?}.\nResole history is:\n{:#?}",
-                type_id,
-                tracked
+                type_id, tracked
             );
         }
-        
+
         tracked.insert(type_id);
 
         CycleGuard {
             guarded_type: type_id,
-            stopper: &self
+            stopper: &self,
         }
     }
 
     fn untrack(&self, type_id: &TypeId) {
         let mut tracked = self.tracked.borrow_mut();
-        
+
         tracked.remove(type_id);
     }
 }
@@ -65,7 +64,7 @@ mod tests {
         let _ = {
             let guard = stopper.track(TypeId::of::<i32>());
             let _ = stopper.track(TypeId::of::<i32>());
-             
+
             guard
         };
     }
@@ -74,7 +73,9 @@ mod tests {
     fn tracked_types_can_get_untracked() {
         let stopper: CycleStopper = Default::default();
 
-        { stopper.track(TypeId::of::<i32>()); } // This goes out of scope
+        {
+            stopper.track(TypeId::of::<i32>());
+        } // This goes out of scope
         stopper.track(TypeId::of::<i32>());
     }
 }
