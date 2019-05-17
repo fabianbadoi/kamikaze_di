@@ -26,10 +26,10 @@ impl CycleStopper {
         }
     }
 
-    fn untrack(&self, type_id: &TypeId) {
+    fn untrack(&self, type_id: TypeId) {
         let mut tracked = self.tracked.borrow_mut();
 
-        tracked.remove(type_id);
+        tracked.remove(&type_id);
     }
 }
 
@@ -40,7 +40,7 @@ pub struct CycleGuard<'a> {
 
 impl<'a> Drop for CycleGuard<'a> {
     fn drop(&mut self) {
-        self.stopper.untrack(&self.guarded_type);
+        self.stopper.untrack(self.guarded_type);
     }
 }
 

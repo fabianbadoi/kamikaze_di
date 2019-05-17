@@ -34,24 +34,24 @@ impl Container {
         let type_id = TypeId::of::<T>();
         let _guard = self.cycle_stopper.track(type_id);
 
-        let resolver_type = self.get_resolver_type(&type_id);
+        let resolver_type = self.get_resolver_type(type_id);
 
         match resolver_type {
-            Some(ResolverType::Factory) => self.call_factory::<T>(&type_id),
+            Some(ResolverType::Factory) => self.call_factory::<T>(type_id),
             Some(ResolverType::Builder) => {
                 self.consume_builder::<T>()?;
-                self.get_shared(&type_id)
+                self.get_shared(type_id)
             }
-            Some(ResolverType::Shared) => self.get_shared(&type_id),
+            Some(ResolverType::Shared) => self.get_shared(type_id),
             None => Err(format!("Type not registered: {:?}", type_id)),
         }
     }
 
-    fn get_resolver_type(&self, type_id: &TypeId) -> Option<ResolverType> {
-        self.resolvers.borrow().get(type_id).map(|r| r.into())
+    fn get_resolver_type(&self, type_id: TypeId) -> Option<ResolverType> {
+        self.resolvers.borrow().get(&type_id).map(|r| r.into())
     }
 
-    fn call_factory<T: 'static>(&self, type_id: &TypeId) -> Result<T> {
+    fn call_factory<T: 'static>(&self, type_id: TypeId) -> Result<T> {
         if let Resolver::Factory(cell) = self.resolvers.borrow().get(&type_id).unwrap() {
             let mut boxed = cell.borrow_mut();
             let factory = boxed.downcast_mut::<Box<Factory<T>>>().unwrap();
@@ -78,10 +78,10 @@ impl Container {
         let item = builder(self);
         let resolver = Resolver::Shared(Box::new(item));
 
-        return self.insert::<T>(resolver);
+        self.insert::<T>(resolver)
     }
 
-    fn get_shared<T: Clone + 'static>(&self, type_id: &TypeId) -> Result<T> {
+    fn get_shared<T: Clone + 'static>(&self, type_id: TypeId) -> Result<T> {
         if let Resolver::Shared(boxed_any) = self.resolvers.borrow().get(&type_id).unwrap() {
             use std::borrow::Borrow;
 

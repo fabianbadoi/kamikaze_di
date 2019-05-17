@@ -60,15 +60,14 @@ use super::{Container, Resolver};
 ///
 /// let forty_one: i64 = container.resolve().unwrap();
 /// ```
+#[derive(Default)]
 pub struct ContainerBuilder {
     resolvers: HashMap<TypeId, Resolver>,
 }
 
 impl ContainerBuilder {
     pub fn new() -> ContainerBuilder {
-        ContainerBuilder {
-            resolvers: Default::default(),
-        }
+        Default::default()
     }
 
     pub fn build(self) -> Container {
