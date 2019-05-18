@@ -3,21 +3,21 @@ extern crate kamikaze_di_derive;
 extern crate kamikaze_di;
 
 use kamikaze_di::{AutoResolver, ContainerBuilder, Result};
+use std::rc::Rc;
 
 #[derive(Resolve, Clone)]
 struct Config {
     pub db: String,
 }
 
-#[derive(Resolve, Clone)]
+#[derive(ResolveToRc, Clone)]
 struct DatabaseConnection {
     config: Config,
 }
 
 #[derive(Resolve, Clone)]
 struct UserRepository {
-    // TODO RC<>
-    db_connection: DatabaseConnection,
+    db_connection: Rc<DatabaseConnection>,
 }
 
 #[test]

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::container::Container;
 use crate::Result;
 
@@ -10,7 +12,8 @@ pub trait AutoResolver<T> {
 }
 
 /// Allows the type to be resolved by the container without having to
-/// register it beforehand.
+/// register it beforehand. If you don't want to also implement Clone,
+/// which this trate requires, use ResolveToRc.
 ///
 /// # Examples
 ///
@@ -40,6 +43,46 @@ pub trait AutoResolver<T> {
 /// assert_eq!( 5, point.y);
 /// ```
 pub trait Resolve
+where
+    Self: Sized,
+{
+    fn resolve(container: &Container) -> Result<Self>;
+}
+
+/// Allows the type to be resolved by the container without having to
+/// register it beforehand. Use this if you don't want your type to
+/// implement Clone.
+///
+/// # Examples
+///
+/// ```
+/// use std::rc::Rc;
+/// use kamikaze_di::{Result, Container, ContainerBuilder, ResolveToRc, AutoResolver};
+///
+/// struct Point { x: i32, y: i32 }
+///
+/// impl ResolveToRc for Point {
+///     fn resolve(container: &Container) -> Result<Self> {
+///         // You can use the container here.
+///         // As long as the compile can figure out the type you want,
+///         // it will do the right thing.
+///         Ok(Point { x: container.resolve()?, y: 5 })
+///     }
+/// }
+///
+/// let mut container_builder = ContainerBuilder::new();
+/// container_builder.register::<i32>(42);
+///
+/// let container = container_builder.build();
+///
+/// let point: Result<Rc<Point>> = container.resolve();
+/// let point = point.unwrap();
+///
+/// assert_eq!(42, point.x);
+/// assert_eq!( 5, point.y);
+/// assert_eq!(2, Rc::strong_count(&point));
+/// ```
+pub trait ResolveToRc
 where
     Self: Sized,
 {
@@ -81,6 +124,23 @@ where
     }
 }
 
+impl<T> AutoResolver<Rc<T>> for Container
+where
+    T: ResolveToRc + 'static,
+{
+    fn resolve(&self) -> Result<Rc<T>> {
+        if !self.has::<Rc<T>>() {
+            let item = T::resolve(self)?;
+
+            use super::Resolver;
+            let resolver = Resolver::Shared(Box::new(Rc::new(item)));
+
+            self.insert::<Rc<T>>(resolver)?;
+        }
+
+        self.get()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::{AutoResolver, Resolve};

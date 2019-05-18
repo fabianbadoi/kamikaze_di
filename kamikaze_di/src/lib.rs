@@ -2,7 +2,7 @@
 
 mod container;
 
-pub use container::auto_resolver::{AutoResolver, Resolve};
+pub use container::auto_resolver::{AutoResolver, Resolve, ResolveToRc};
 pub use container::builder::ContainerBuilder;
 pub use container::omni_resolver::OmniResolver;
 pub use container::Container;
