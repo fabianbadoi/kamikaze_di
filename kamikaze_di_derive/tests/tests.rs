@@ -2,20 +2,20 @@
 extern crate kamikaze_di_derive;
 extern crate kamikaze_di;
 
-use kamikaze_di::{AutoResolver, ContainerBuilder, Result};
+use kamikaze_di::{Injector, ContainerBuilder, Result};
 use std::rc::Rc;
 
-#[derive(Resolve, Clone)]
+#[derive(Inject, Clone)]
 struct X {
     u: usize,
 }
 
-#[derive(Resolve, Clone)]
+#[derive(Inject, Clone)]
 struct Y {
     _x: X,
 }
 
-#[derive(ResolveToRc)]
+#[derive(InjectAsRc)]
 struct Z {
     _x: X,
 }
@@ -27,7 +27,7 @@ fn test_derive() {
 
     let container = builder.build();
 
-    let y: Result<Y> = container.resolve();
+    let y: Result<Y> = container.inject();
 
     assert!(y.is_ok());
 }
@@ -39,7 +39,7 @@ fn test_derive_to_rc() {
 
     let container = builder.build();
 
-    let z: Result<Rc<Z>> = AutoResolver::<Rc<Z>>::resolve(&container);
+    let z: Result<Rc<Z>> = Injector::<Rc<Z>>::inject(&container);
 
     assert!(z.is_ok());
 }

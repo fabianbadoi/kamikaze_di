@@ -2,7 +2,7 @@ use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::auto_resolver::Resolve;
+use super::injector::Inject;
 use super::cycle::CycleStopper;
 use crate::Result;
 
@@ -144,12 +144,12 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver, Resolve, Result};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver, Inject, Result};
     /// # use std::rc::Rc;
     /// #
     /// #[derive(Clone)]
     /// struct X {}
-    /// impl Resolve for X {
+    /// impl Inject for X {
     ///     fn resolve(container: &Container) -> Result<Self> {
     ///         Ok(X {})
     ///     }
@@ -163,7 +163,7 @@ impl ContainerBuilder {
     /// let x1 = container.resolve::<X>().unwrap();
     /// let x2 = container.resolve::<X>().unwrap();
     /// ```
-    pub fn register_automatic_factory<T: Resolve + 'static>(&mut self) -> Result<()> {
+    pub fn register_automatic_factory<T: Inject + 'static>(&mut self) -> Result<()> {
         self.register_factory(auto_factory::<T>)
     }
 
@@ -181,21 +181,21 @@ impl ContainerBuilder {
     /// builder.register::<i16>(43);
     ///
     /// builder.register_builder::<i32, _>(|container| {
-    ///     let base: i16 = container.resolve().unwrap();
+    ///     let base = container.resolve::<i16>().unwrap();
     ///     let base: i32 = base.into();
     ///     base - 1
     /// });
     ///
     /// builder.register_builder::<i64, _>(|container| {
-    ///     let base: i32 = container.resolve().unwrap();
+    ///     let base = container.resolve::<i32>().unwrap();
     ///     let base: i64 = base.into();
     ///     base - 1
     /// });
     ///
     /// let container = builder.build();
     ///
-    /// let forty_one: i64 = container.resolve().unwrap();
-    /// let forty_two: i32 = container.resolve().unwrap();
+    /// let forty_one = container.resolve::<i64>().unwrap();
+    /// let forty_two = container.resolve::<i32>().unwrap();
     ///
     /// assert_eq!(forty_one, 41);
     /// assert_eq!(forty_two, 42);
@@ -247,6 +247,6 @@ impl ContainerBuilder {
     }
 }
 
-fn auto_factory<T: Resolve>(container: &Container) -> T {
+fn auto_factory<T: Inject>(container: &Container) -> T {
     T::resolve(container).unwrap()
 }

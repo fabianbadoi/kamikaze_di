@@ -4,7 +4,7 @@ extern crate kamikaze_di_derive;
 
 use std::cell::Cell;
 use std::rc::Rc;
-use kamikaze_di::{Container, ContainerBuilder, Resolve, ResolveToRc, Result, AutoResolver};
+use kamikaze_di::{Container, ContainerBuilder, Inject, InjectAsRc, Result, Injector};
 
 const TEXT_RESET: &str = "\x1b[1;0m";
 const TEXT_BOLD: &str = "\x1b[1;1m";
@@ -29,9 +29,9 @@ struct Normal {
     color: String,
 }
 
-impl Resolve for Normal {
+impl Inject for Normal {
     fn resolve(container: &Container) -> Result<Normal> {
-        let config: Config = container.resolve()?;
+        let config: Config = container.inject()?;
         let color = config.normal_color.clone();
 
         Ok(Normal { color })
@@ -49,9 +49,9 @@ struct Loud {
     color: String,
 }
 
-impl Resolve for Loud {
+impl Inject for Loud {
     fn resolve(container: &Container) -> Result<Loud> {
-        let config: Config = container.resolve()?;
+        let config: Config = container.inject()?;
         let color = config.caps_color.clone();
 
         Ok(Loud { color })
@@ -70,9 +70,9 @@ struct Soft {
     color: String,
 }
 
-impl Resolve for Soft {
+impl Inject for Soft {
     fn resolve(container: &Container) -> Result<Soft> {
-        let config: Config = container.resolve()?;
+        let config: Config = container.inject()?;
         let color = config.italic_color.clone();
 
         Ok(Soft { color })
@@ -91,11 +91,11 @@ struct VoiceBox {
     next_voice: Cell<usize>,
 }
 
-impl ResolveToRc for VoiceBox {
+impl InjectAsRc for VoiceBox {
     fn resolve(container: &Container) -> Result<VoiceBox> {
-        let normal: Normal = container.resolve()?;
-        let loud: Loud = container.resolve()?;
-        let soft: Soft = container.resolve()?;
+        let normal: Normal = container.inject()?;
+        let loud: Loud = container.inject()?;
+        let soft: Soft = container.inject()?;
             
         Ok(VoiceBox {
             voices: vec![
@@ -127,7 +127,7 @@ impl VoiceBox {
 #[derive(Clone)]
 struct Line(String, String);
 
-#[derive(Resolve, Clone)]
+#[derive(Inject, Clone)]
 struct Jester {
     voice_box: Rc<VoiceBox>,
     lines: Vec<Line>,
@@ -163,7 +163,7 @@ fn main() {
         caps_color: TEXT_COLOR_RED.to_owned(),
     }).unwrap();
     builder.register_builder(|container| {
-        let config: Config = container.resolve().unwrap();
+        let config: Config = container.inject().unwrap();
         let lines: Vec<Line> = config.lines
             .iter()
             .map(|l| Line(l.0.clone(), l.1.clone()))
@@ -174,6 +174,6 @@ fn main() {
 
     let container = builder.build();
 
-    let jester: Jester = container.resolve().unwrap();
+    let jester: Jester = container.inject().unwrap();
     jester.perform();
 }

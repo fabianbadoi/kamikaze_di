@@ -6,29 +6,29 @@ use crate::Result;
 /// This trait allows the container to resolve some types without
 /// them having to be registered beforehand.
 ///
-/// See the Resolve trait for examples.
-pub trait AutoResolver<T> {
-    fn resolve(&self) -> Result<T>;
+/// See the Inject trait for examples.
+pub trait Injector<T> {
+    fn inject(&self) -> Result<T>;
 }
 
 /// Allows the type to be resolved by the container without having to
 /// register it beforehand. If you don't want to also implement Clone,
-/// which this trate requires, use ResolveToRc.
+/// which this trate requires, use InjectAsRc.
 ///
 /// # Examples
 ///
 /// ```
-/// use kamikaze_di::{Result, Container, ContainerBuilder, Resolve, AutoResolver};
+/// use kamikaze_di::{Result, Container, ContainerBuilder, Inject, Injector};
 ///
 /// #[derive(Clone)]
 /// struct Point { x: i32, y: i32 }
 ///
-/// impl Resolve for Point {
+/// impl Inject for Point {
 ///     fn resolve(container: &Container) -> Result<Self> {
 ///         // You can use the container here.
 ///         // As long as the compile can figure out the type you want,
 ///         // it will do the right thing.
-///         Ok(Point { x: container.resolve()?, y: 5 })
+///         Ok(Point { x: container.inject()?, y: 5 })
 ///     }
 /// }
 ///
@@ -37,12 +37,12 @@ pub trait AutoResolver<T> {
 ///
 /// let container = container_builder.build();
 ///
-/// let point: Point = container.resolve().unwrap();
+/// let point: Point = container.inject().unwrap();
 ///
 /// assert_eq!(42, point.x);
 /// assert_eq!( 5, point.y);
 /// ```
-pub trait Resolve
+pub trait Inject
 where
     Self: Sized,
 {
@@ -57,16 +57,16 @@ where
 ///
 /// ```
 /// use std::rc::Rc;
-/// use kamikaze_di::{Result, Container, ContainerBuilder, ResolveToRc, AutoResolver};
+/// use kamikaze_di::{Result, Container, ContainerBuilder, InjectAsRc, Injector};
 ///
 /// struct Point { x: i32, y: i32 }
 ///
-/// impl ResolveToRc for Point {
+/// impl InjectAsRc for Point {
 ///     fn resolve(container: &Container) -> Result<Self> {
 ///         // You can use the container here.
 ///         // As long as the compile can figure out the type you want,
 ///         // it will do the right thing.
-///         Ok(Point { x: container.resolve()?, y: 5 })
+///         Ok(Point { x: container.inject()?, y: 5 })
 ///     }
 /// }
 ///
@@ -75,42 +75,42 @@ where
 ///
 /// let container = container_builder.build();
 ///
-/// let point: Result<Rc<Point>> = container.resolve();
+/// let point: Result<Rc<Point>> = container.inject();
 /// let point = point.unwrap();
 ///
 /// assert_eq!(42, point.x);
 /// assert_eq!( 5, point.y);
 /// assert_eq!(2, Rc::strong_count(&point));
 /// ```
-pub trait ResolveToRc
+pub trait InjectAsRc
 where
     Self: Sized,
 {
     fn resolve(container: &Container) -> Result<Self>;
 }
 
-impl<T> AutoResolver<T> for Container
+impl<T> Injector<T> for Container
 where
     T: Clone + 'static,
 {
-    default fn resolve(&self) -> Result<T> {
+    default fn inject(&self) -> Result<T> {
         self.get()
     }
 }
 
 // This would be amazing
 //use std::convert::TryFrom;
-//impl<T> TryFrom<Container> for T where T: Resolve {
+//impl<T> TryFrom<Container> for T where T: Inject {
 //    fn from(other: &Container) -> Result<T> {
-//        AutoResolver::<T>::resolve(other)
+//        Injector::<T>::inject(other)
 //    }
 //}
 
-impl<T> AutoResolver<T> for Container
+impl<T> Injector<T> for Container
 where
-    T: Resolve + Clone + 'static,
+    T: Inject + Clone + 'static,
 {
-    fn resolve(&self) -> Result<T> {
+    fn inject(&self) -> Result<T> {
         if !self.has::<T>() {
             let item = T::resolve(self)?;
 
@@ -124,11 +124,11 @@ where
     }
 }
 
-impl<T> AutoResolver<Rc<T>> for Container
+impl<T> Injector<Rc<T>> for Container
 where
-    T: ResolveToRc + 'static,
+    T: InjectAsRc + 'static,
 {
-    fn resolve(&self) -> Result<Rc<T>> {
+    fn inject(&self) -> Result<Rc<T>> {
         if !self.has::<Rc<T>>() {
             let item = T::resolve(self)?;
 
@@ -143,7 +143,7 @@ where
 }
 #[cfg(test)]
 mod tests {
-    use super::{AutoResolver, Resolve};
+    use super::{Injector, Inject};
     use crate::{Container, ContainerBuilder, Result};
 
     #[derive(Clone)]
@@ -155,15 +155,15 @@ mod tests {
         x: X,
     }
 
-    impl Resolve for Y {
+    impl Inject for Y {
         fn resolve(container: &Container) -> Result<Self> {
             Ok(Y {
-                x: container.resolve()?,
+                x: container.inject()?,
             })
         }
     }
 
-    impl Resolve for X {
+    impl Inject for X {
         fn resolve(_: &Container) -> Result<Self> {
             Ok(X { inner: 42 })
         }
@@ -173,7 +173,7 @@ mod tests {
     fn container_can_resolve_resolvables_automatically() {
         let container = ContainerBuilder::new().build();
 
-        let x: X = container.resolve().expect("expected a value for X");
+        let x: X = container.inject().expect("expected a value for X");
 
         assert_eq!(42, x.inner);
     }
@@ -182,7 +182,7 @@ mod tests {
     fn auto_resolvables_can_get_chained() {
         let container = ContainerBuilder::new().build();
 
-        let y: Y = container.resolve().expect("expected a value for Y");
+        let y: Y = container.inject().expect("expected a value for Y");
 
         assert_eq!(42, y.x.inner);
     }
@@ -195,10 +195,10 @@ mod tests {
         struct A {
             inner: Rc<usize>,
         }
-        impl Resolve for A {
+        impl Inject for A {
             fn resolve(container: &Container) -> Result<A> {
                 Ok(A {
-                    inner: container.resolve()?,
+                    inner: container.inject()?,
                 })
             }
         }
@@ -208,13 +208,13 @@ mod tests {
 
         let container = builder.build();
 
-        let a1: A = container.resolve().unwrap();
-        let _a2: A = container.resolve().unwrap();
+        let a1: A = container.inject().unwrap();
+        let _a2: A = container.inject().unwrap();
 
         // the inner rc was cloned:
-        // - once in resolve() when calling resolve() => strong count of inner is 2
-        // - once more because more when cloning A on the first resolve => 3
-        // - a third time when resolving A again => 4
+        // - once in inject() when calling resolve() => strong count of inner is 2
+        // - once more  when cloning A on the first inject() => 3
+        // - a third time when inject()-ing A again => 4
         let a1_was_cloned = Rc::strong_count(&a1.inner) == 4;
         assert!(a1_was_cloned);
     }
@@ -227,10 +227,10 @@ mod tests {
         struct A {
             inner: Rc<usize>,
         }
-        impl Resolve for A {
+        impl Inject for A {
             fn resolve(container: &Container) -> Result<A> {
                 Ok(A {
-                    inner: container.resolve()?,
+                    inner: container.inject()?,
                 })
             }
         }
@@ -241,12 +241,12 @@ mod tests {
 
         let container = builder.build();
 
-        let a1: A = container.resolve().unwrap();
-        let _a2: A = container.resolve().unwrap();
+        let a1: A = container.inject().unwrap();
+        let _a2: A = container.inject().unwrap();
 
         // the inner rc was cloned:
-        // - once in resolve() when calling resolve() => strong count of inner is 2
-        // - once more because more when cloning A on the first resolve => 3
+        // - once in inject() when calling resolve() => strong count of inner is 2
+        // - once  more when cloning A on the first inject() => 3
         let a1_was_not_cloned = Rc::strong_count(&a1.inner) == 3;
         assert!(a1_was_not_cloned);
     }

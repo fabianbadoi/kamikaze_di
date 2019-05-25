@@ -2,20 +2,20 @@
 extern crate kamikaze_di_derive;
 extern crate kamikaze_di;
 
-use kamikaze_di::{AutoResolver, ContainerBuilder, Result};
+use kamikaze_di::{Injector, ContainerBuilder, Result};
 use std::rc::Rc;
 
-#[derive(Resolve, Clone)]
+#[derive(Inject, Clone)]
 struct Config {
     pub db: String,
 }
 
-#[derive(ResolveToRc, Clone)]
+#[derive(InjectAsRc, Clone)]
 struct DatabaseConnection {
     config: Config,
 }
 
-#[derive(Resolve, Clone)]
+#[derive(Inject, Clone)]
 struct UserRepository {
     db_connection: Rc<DatabaseConnection>,
 }
@@ -31,7 +31,7 @@ fn test_derive() {
 
     let container = builder.build();
 
-    let user_repo_result: Result<UserRepository> = container.resolve();
+    let user_repo_result: Result<UserRepository> = container.inject();
 
     assert!(user_repo_result.is_ok());
 

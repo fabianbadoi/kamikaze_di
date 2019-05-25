@@ -6,11 +6,11 @@ I mostly want to know what people think, and if anyone would want to use somethi
 
 ## What it looks like in action
 ```rust
-let config = container.resolve::<Config>(); // simple resolve via the OmniResolver trait
-let config: Config = cotantiner.resolve();  // using AutoResolver and Resolve/ResolveToRc
+let config = container.resolve::<Config>(); // simple resolve via the Resolver trait
+let config: Config = cotantiner.inject();  // using Injector and Inject/InjectAsRc
 
-// deriving the Resolve trait teaches the container how to create it
-#[derive(Resolve, Clone)]
+// deriving the Inject trait teaches the container how to create it
+#[derive(Inject, Clone)]
 struct DabatabaseConnection {
     ...
 }
@@ -78,18 +78,18 @@ use myself, and I don't write enough Rust code to do that.
 If the `AutoResolvable` trait is in scope, the container will try to figure out how to create dependencies itself.
 This would usually be done with reflection at runtime, but rust doesn't support that.
 
-Any type implements `Resolve` or `ResolveToRc` can be resolved this way. Of course, writing all that code youself is
+Any type implements `Inject` or `InjectAsRc` can be resolved this way. Of course, writing all that code youself is
 tedious. So why not just derive that?
 
 ```rust
 // Just derive this trait
-#[derive(Resolve, Clone)]
+#[derive(Inject, Clone)]
 struct YourStruct {
 // ...
 }
 ```
 
-All of that types dependencies will need to either derive `Resolve`, `ResolveToRc` or be registered with the container.
+All of that types dependencies will need to either derive `Inject`, `InjectAsRc` or be registered with the container.
 
 
 ## Errors

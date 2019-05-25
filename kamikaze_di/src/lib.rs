@@ -2,7 +2,7 @@
 
 mod container;
 
-pub use container::auto_resolver::{AutoResolver, Resolve, ResolveToRc};
+pub use container::injector::{Injector, Inject, InjectAsRc};
 pub use container::builder::ContainerBuilder;
 pub use container::resolver::Resolver;
 pub use container::Container;

@@ -10,14 +10,14 @@ use syn::{
     Path,
 };
 
-#[proc_macro_derive(Resolve)]
+#[proc_macro_derive(Inject)]
 pub fn derive_resolve(input: TokenStream) -> TokenStream {
-    derive_code(input, "kamikaze_di::Resolve")
+    derive_code(input, "kamikaze_di::Inject")
 }
 
-#[proc_macro_derive(ResolveToRc)]
+#[proc_macro_derive(InjectAsRc)]
 pub fn derive_resolve_to_rc(input: TokenStream) -> TokenStream {
-    derive_code(input, "kamikaze_di::ResolveToRc")
+    derive_code(input, "kamikaze_di::InjectAsRc")
 }
 
 fn derive_code(input: TokenStream, trait_path: &str) -> TokenStream {
@@ -42,7 +42,7 @@ fn derive_for_named(name: Ident, fields: FieldsNamed, resolve_type: Path) -> Tok
         let name = &field.ident;
 
         quote_spanned! {field.span()=>
-            #name: kamikaze_di::AutoResolver::resolve(container)?,
+            #name: kamikaze_di::Injector::inject(container)?,
         }
     });
 
@@ -62,7 +62,7 @@ fn derive_for_named(name: Ident, fields: FieldsNamed, resolve_type: Path) -> Tok
 fn derive_for_unnamed(name: Ident, fields: FieldsUnnamed, resolve_type: Path) -> TokenStream {
     let resolve_fields = fields.unnamed.iter().enumerate().map(|(_index, field)| {
         quote_spanned! {field.span()=>
-            kamikaze_di::AutoResolver::resolve(container)?,
+            kamikaze_di::Injector::inject(container)?,
         }
     });
 

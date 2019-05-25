@@ -1,4 +1,4 @@
-pub mod auto_resolver;
+pub mod injector;
 pub mod builder;
 pub mod resolver;
 
