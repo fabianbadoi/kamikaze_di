@@ -23,7 +23,7 @@ use super::{Container, Resolver};
 /// # Examples
 ///
 /// ```
-/// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+/// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
 ///
 /// let mut builder = ContainerBuilder::new();
 /// let result_1 = builder.register::<u32>(42);
@@ -38,7 +38,7 @@ use super::{Container, Resolver};
 ///
 /// Circular dependencies will cause continer.resolve() to panic:
 /// ```should_panic
-/// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+/// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
 ///
 /// let mut builder = ContainerBuilder::new();
 ///
@@ -82,7 +82,7 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     ///
     /// let mut builder = ContainerBuilder::new();
     /// let result = builder.register::<u32>(42);
@@ -102,7 +102,7 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     ///
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
@@ -144,7 +144,7 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver, Resolve, Result};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver, Resolve, Result};
     /// # use std::rc::Rc;
     /// #
     /// #[derive(Clone)]
@@ -175,7 +175,7 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     ///
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
@@ -220,7 +220,7 @@ impl ContainerBuilder {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     ///
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);

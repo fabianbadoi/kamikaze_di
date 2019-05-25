@@ -15,7 +15,7 @@ use super::*;
 ///
 /// ```
 /// # use std::rc::Rc;
-/// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+/// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
 ///
 /// // does not implement Clone or Copy
 /// struct Keeper { x: i32 }
@@ -34,7 +34,7 @@ use super::*;
 ///
 /// ```
 /// # use std::rc::Rc;
-/// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+/// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
 ///
 /// // does not implement Clone or Copy
 /// struct Keeper { x: i32 }
@@ -49,13 +49,13 @@ use super::*;
 /// let resolved = container.resolve::<Rc<XKeeper>>().unwrap();
 /// assert_eq!(resolved.get_x(), 42);
 /// ```
-pub trait OmniResolver {
+pub trait Resolver {
     /// Resolve a dependency
     ///
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     ///
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<u32>(42);
@@ -72,7 +72,7 @@ pub trait OmniResolver {
     /// # Examples
     ///
     /// ```
-    /// # use kamikaze_di::{Container, ContainerBuilder, OmniResolver};
+    /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     ///
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
@@ -83,7 +83,7 @@ pub trait OmniResolver {
     fn has<T: 'static>(&self) -> bool;
 }
 
-impl OmniResolver for Container {
+impl Resolver for Container {
     fn resolve<T: Clone + 'static>(&self) -> Result<T> {
         self.get::<T>()
     }

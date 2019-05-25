@@ -1,6 +1,6 @@
 pub mod auto_resolver;
 pub mod builder;
-pub mod omni_resolver;
+pub mod resolver;
 
 mod cycle;
 
@@ -140,7 +140,7 @@ impl From<&Resolver> for ResolverType {
 #[cfg(test)]
 mod tests {
     use super::builder::ContainerBuilder;
-    use crate::OmniResolver;
+    use crate::Resolver;
 
     #[test]
     #[should_panic(expected = "Circular dependency")]
