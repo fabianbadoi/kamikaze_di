@@ -104,4 +104,4 @@ using macros.
 I don't know, find out is on my TODO list.
 
 ## Examples
-There's examples in repo and the documentation.
+There are examples in repo and the documentation.

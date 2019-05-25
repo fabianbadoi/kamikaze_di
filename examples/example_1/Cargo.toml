@@ -1,0 +1,9 @@
+[package]
+name = "example_1"
+version = "0.1.0"
+authors = ["Fabian Badoi <fabian.badoi@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+kamikaze_di = { path = "../../kamikaze_di" }
+kamikaze_di_derive = { path = "../../kamikaze_di_derive" }
