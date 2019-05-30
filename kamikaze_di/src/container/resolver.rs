@@ -1,5 +1,7 @@
 use super::*;
 
+/// Resolves dependencies.
+///
 /// Dependencies have to be registered beforehand, how you do
 /// that depends on the implementing type.
 ///
@@ -16,7 +18,7 @@ use super::*;
 /// ```
 /// # use std::rc::Rc;
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-///
+/// #
 /// // does not implement Clone or Copy
 /// struct Keeper { x: i32 }
 ///
@@ -35,7 +37,7 @@ use super::*;
 /// ```
 /// # use std::rc::Rc;
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-///
+/// #
 /// // does not implement Clone or Copy
 /// struct Keeper { x: i32 }
 /// trait XKeeper { fn get_x(&self) -> i32; }
@@ -56,7 +58,7 @@ pub trait Resolver {
     ///
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-    ///
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<u32>(42);
     ///
@@ -73,7 +75,7 @@ pub trait Resolver {
     ///
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-    ///
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
     ///

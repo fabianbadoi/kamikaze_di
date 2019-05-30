@@ -3,17 +3,21 @@ use std::rc::Rc;
 use crate::container::Container;
 use crate::Result;
 
+/// Resolves dependencies automatically.
+///
 /// This trait allows the container to resolve some types without
 /// them having to be registered beforehand.
 ///
-/// See the Inject trait for examples.
+/// See the [Inject](trait.Inject.html) trait for examples.
 pub trait Injector<T> {
     fn inject(&self) -> Result<T>;
 }
 
+/// Resolves itself from a container.
+///
 /// Allows the type to be resolved by the container without having to
 /// register it beforehand. If you don't want to also implement Clone,
-/// which this trate requires, use InjectAsRc.
+/// which this trait requires, use [InjectAsRc](trait.InjectAsRc.html).
 ///
 /// # Examples
 ///
@@ -49,6 +53,8 @@ where
     fn resolve(container: &Container) -> Result<Self>;
 }
 
+/// Resolves itself from a container as a Rc<T>.
+///
 /// Allows the type to be resolved by the container without having to
 /// register it beforehand. Use this if you don't want your type to
 /// implement Clone.

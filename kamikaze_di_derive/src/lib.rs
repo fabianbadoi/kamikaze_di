@@ -1,3 +1,7 @@
+//! # Derive macros for Kamikaze DI
+//!
+//! See examples on how to use, have a look at kamikaze_di.
+
 extern crate proc_macro;
 extern crate quote;
 extern crate syn;

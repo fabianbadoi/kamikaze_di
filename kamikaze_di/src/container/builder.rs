@@ -8,23 +8,23 @@ use crate::Result;
 
 use super::{Container, Resolver};
 
-/// Dependency container builder
+/// Dependency container builder.
 ///
 /// You can register shared dependencies (they will act like singletons)
-/// with the register() and register_builder() functions.
+/// with the [register()](struct.ContainerBuilder.html#method.register) and
+/// [register_builder()](struct.ContainerBuilder.html#method.register_builder) functions.
 ///
 /// You can register factories for dependencies (each request for them
-/// will produce a new instance) with the register_factory() and
-/// register_automatic_factory() functions.
+/// will produce a new instance) with the
+/// [register_factory()](struct.ContainerBuilder.html#method.register_factory) and
+/// [register_automatic_factory()](struct.ContainerBuilder.html#method.register_automatic_factory) functions.
 ///
-/// Register fuctions return an Err(String) when trying to register the same
-/// dependency twice.
 ///
 /// # Examples
 ///
 /// ```
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-///
+/// #
 /// let mut builder = ContainerBuilder::new();
 /// let result_1 = builder.register::<u32>(42);
 /// let result_2 = builder.register::<u32>(43);
@@ -39,7 +39,7 @@ use super::{Container, Resolver};
 /// Circular dependencies will cause continer.resolve() to panic:
 /// ```should_panic
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-///
+/// #
 /// let mut builder = ContainerBuilder::new();
 ///
 /// builder.register_factory::<i32, _>(|container| {
@@ -81,10 +81,10 @@ impl ContainerBuilder {
     /// Registeres a dependency directly
     ///
     /// # Examples
-    ///
+    /// #
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-    ///
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// let result = builder.register::<u32>(42);
     ///
@@ -101,13 +101,13 @@ impl ContainerBuilder {
 
     /// Registers a factory.
     ///
-    /// Every call to get() will return a new dependency.
+    /// Every time a dependency is resolved, a new item will be created.
     ///
     /// # Examples
     ///
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-    ///
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
     ///
@@ -144,8 +144,7 @@ impl ContainerBuilder {
         self.insert::<T>(resolver)
     }
 
-    /// Makes the container **not** reuse this type. Every call to get() will
-    /// give you a new instance.
+    /// Every time a dependency is resolved, a new item will be created.
     ///
     /// # Examples
     ///
@@ -177,13 +176,14 @@ impl ContainerBuilder {
     /// Registers a builder.
     ///
     /// The dependency is created only when needed and after that
-    /// it behaves as if registered via register(item).
+    /// it behaves as if registered via
+    /// [register(item)](struct.ContainerBuilder.html#method.register).
     ///
     /// # Examples
     ///
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-    ///
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
     ///
@@ -230,7 +230,7 @@ impl ContainerBuilder {
     ///
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
-    ///
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
     ///

@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use crate::Result;
 use cycle::CycleStopper;
 
-/// Dependency container builder
+/// Dependency container. Can be used with Resolver or Injector.
 #[derive(Debug)]
 pub struct Container {
     resolvers: RefCell<HashMap<TypeId, Resolver>>,
