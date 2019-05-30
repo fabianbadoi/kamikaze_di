@@ -123,7 +123,7 @@ fn derive_for_unnamed(name: Ident, fields: FieldsUnnamed, resolve_type: Path) ->
     let log_debug = if cfg!(feature = "logging") {
         quote! { debug!("injecting {}", #quoted_name); }
     } else {
-        quote! { }
+        quote! {}
     };
 
     TokenStream::from(quote! {

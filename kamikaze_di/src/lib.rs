@@ -48,8 +48,8 @@ extern crate log;
 
 mod container;
 
-pub use container::injector::{Injector, Inject, InjectAsRc};
 pub use container::builder::ContainerBuilder;
+pub use container::injector::{Inject, InjectAsRc, Injector};
 pub use container::resolver::Resolver;
 pub use container::Container;
 

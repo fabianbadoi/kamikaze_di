@@ -1,5 +1,5 @@
-pub mod injector;
 pub mod builder;
+pub mod injector;
 pub mod resolver;
 
 mod cycle;

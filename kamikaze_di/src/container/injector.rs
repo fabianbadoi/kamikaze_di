@@ -157,7 +157,7 @@ where
 }
 #[cfg(test)]
 mod tests {
-    use super::{Injector, Inject};
+    use super::{Inject, Injector};
     use crate::{Container, ContainerBuilder, Result};
 
     #[derive(Clone)]

@@ -2,7 +2,7 @@
 extern crate kamikaze_di_derive;
 extern crate kamikaze_di;
 
-use kamikaze_di::{Injector, ContainerBuilder, Result};
+use kamikaze_di::{ContainerBuilder, Injector, Result};
 use std::rc::Rc;
 
 #[derive(Inject, Clone)]

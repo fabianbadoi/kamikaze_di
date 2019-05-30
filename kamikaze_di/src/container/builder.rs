@@ -2,8 +2,8 @@ use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use super::injector::Inject;
 use super::cycle::CycleStopper;
+use super::injector::Inject;
 use crate::Result;
 
 use super::{Container, Resolver};
