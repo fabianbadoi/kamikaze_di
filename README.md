@@ -93,14 +93,12 @@ All of that types dependencies will need to either derive `Inject`, `InjectAsRc`
 
 
 ## Errors
-I'll be frank, they suck. The look like:
-> Could not resolve TypeId { 1589273952 }
-
-The container uses `std::any::TypeId`, and that's just a u64. It could be possible to do get something better done by
-using macros.
-
-You will get better error messages if you use the log crate.
-
+You will get pretty decent error messages when types can't be resolved. Here's what you get if you unwrap() an error.
+```
+could not resolve Jester::voice_box : Rc < VoiceBox > ...
+```
+It's not perfect, the error doesn't use the full path of the type, but it's probably good enough to figure out what went
+wrong.
 
 ## Is if possible to insert wrong type
 I don't know, find out is on my TODO list.
