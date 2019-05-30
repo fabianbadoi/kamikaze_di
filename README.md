@@ -99,6 +99,8 @@ I'll be frank, they suck. The look like:
 The container uses `std::any::TypeId`, and that's just a u64. It could be possible to do get something better done by
 using macros.
 
+You will get better error messages if you use the log crate.
+
 
 ## Is if possible to insert wrong type
 I don't know, find out is on my TODO list.

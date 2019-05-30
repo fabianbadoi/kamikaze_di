@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate kamikaze_di_derive;
 extern crate kamikaze_di;
+#[macro_use]
+extern crate log;
 
 use kamikaze_di::{Injector, ContainerBuilder, Result};
 use std::rc::Rc;

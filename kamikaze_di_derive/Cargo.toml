@@ -10,6 +10,7 @@ proc-macro = true
 [dependencies]
 quote = "^0.6"
 syn = "^0.15"
+log = "^0.4"
 
 [dev-dependencies]
 kamikaze_di = { path = "../kamikaze_di" }

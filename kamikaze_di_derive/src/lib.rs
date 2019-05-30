@@ -38,17 +38,30 @@ fn derive_code(input: TokenStream, trait_path: &str) -> TokenStream {
 }
 
 fn derive_for_named(name: Ident, fields: FieldsNamed, resolve_type: Path) -> TokenStream {
+    let quoted_name = quote!(#name).to_string();
+
     let resolve_fields = fields.named.iter().map(|field| {
         let name = &field.ident;
+        let ty = quote!(#field).to_string();
 
         quote_spanned! {field.span()=>
-            #name: kamikaze_di::Injector::inject(container)?,
+            #name: {
+                debug!("resolving {}::{}", #quoted_name, #ty);
+
+                kamikaze_di::Injector::inject(container).map_err(|s| {
+                    warn!("could not resolve {}::{}", #quoted_name, #ty);
+
+                    format!("could not resolve {}::{}: {}", #quoted_name, #ty, s)
+                })?
+            },
         }
     });
 
     let quote = quote! {
         impl #resolve_type for #name {
             fn resolve(container: &kamikaze_di::Container) -> kamikaze_di::Result<Self> {
+                debug!("injecting {}", #quoted_name);
+
                 Ok(#name {
                     #(#resolve_fields)*
                 })
@@ -60,15 +73,29 @@ fn derive_for_named(name: Ident, fields: FieldsNamed, resolve_type: Path) -> Tok
 }
 
 fn derive_for_unnamed(name: Ident, fields: FieldsUnnamed, resolve_type: Path) -> TokenStream {
-    let resolve_fields = fields.unnamed.iter().enumerate().map(|(_index, field)| {
+    let quoted_name = quote!(#name).to_string();
+
+    let resolve_fields = fields.unnamed.iter().enumerate().map(|(index, field)| {
+        let ty = quote!(#field).to_string();
+
         quote_spanned! {field.span()=>
-            kamikaze_di::Injector::inject(container)?,
+            {
+                debug!("resolving {}::{}::{}", #quoted_name, #index, #ty);
+
+                kamikaze_di::Injector::inject(container).map_err(|s| {
+                    warn!("could not resolve {}::{}", #quoted_name, #ty);
+
+                    format!("could not resolve {}::{}: {}", #quoted_name, #ty, s)
+                })?
+            },
         }
     });
 
     TokenStream::from(quote! {
         impl #resolve_type for #name {
             fn resolve(container: &kamikaze_di::Container) -> kamikaze_di::Result<Self> {
+                debug!("injecting {}", #quoted_name);
+
                 Ok(#name (
                     #(#resolve_fields)*
                 ))
