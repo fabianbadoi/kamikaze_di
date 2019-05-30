@@ -12,6 +12,7 @@ use crate::Result;
 use cycle::CycleStopper;
 
 /// Dependency container builder
+#[derive(Debug)]
 pub struct Container {
     resolvers: RefCell<HashMap<TypeId, Resolver>>,
     cycle_stopper: CycleStopper,
@@ -114,6 +115,7 @@ impl Container {
     }
 }
 
+#[derive(Debug)]
 enum Resolver {
     /// Factories get called multiple times
     ///

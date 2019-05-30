@@ -60,7 +60,7 @@ use super::{Container, Resolver};
 ///
 /// let forty_one: i64 = container.resolve().unwrap();
 /// ```
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ContainerBuilder {
     resolvers: HashMap<TypeId, Resolver>,
 }

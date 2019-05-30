@@ -2,7 +2,7 @@ use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::HashSet;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct CycleStopper {
     tracked: RefCell<HashSet<TypeId>>,
 }
