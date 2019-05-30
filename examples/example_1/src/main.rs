@@ -1,6 +1,9 @@
 extern crate kamikaze_di;
 #[macro_use]
 extern crate kamikaze_di_derive;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 use std::cell::Cell;
 use std::rc::Rc;
@@ -151,6 +154,8 @@ fn color(color: &str, string: &str) -> String {
 }
 
 fn main() {
+    env_logger::init();
+
     let mut builder = ContainerBuilder::new();
     builder.register(Config {
         lines: vec![

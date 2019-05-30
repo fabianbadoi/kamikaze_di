@@ -43,13 +43,22 @@ fn derive_for_named(name: Ident, fields: FieldsNamed, resolve_type: Path) -> Tok
     let resolve_fields = fields.named.iter().map(|field| {
         let name = &field.ident;
         let ty = quote!(#field).to_string();
+        let log_debug = if cfg!(feature = "logging") {
+            quote! { debug!("resolving {}::{}", #quoted_name, #ty); }
+        } else {
+            quote! {}
+        };
+        let log_warning = if cfg!(feature = "logging") {
+            quote! { warn!("could not resolve {}::{}", #quoted_name, #ty); }
+        } else {
+            quote! {}
+        };
 
         quote_spanned! {field.span()=>
             #name: {
-                debug!("resolving {}::{}", #quoted_name, #ty);
-
+                #log_debug
                 kamikaze_di::Injector::inject(container).map_err(|s| {
-                    warn!("could not resolve {}::{}", #quoted_name, #ty);
+                    #log_warning
 
                     format!("could not resolve {}::{}: {}", #quoted_name, #ty, s)
                 })?
@@ -57,10 +66,16 @@ fn derive_for_named(name: Ident, fields: FieldsNamed, resolve_type: Path) -> Tok
         }
     });
 
+    let log_debug = if cfg!(feature = "logging") {
+        quote! { debug!("injecting {}", #quoted_name); }
+    } else {
+        quote! {}
+    };
+
     let quote = quote! {
         impl #resolve_type for #name {
             fn resolve(container: &kamikaze_di::Container) -> kamikaze_di::Result<Self> {
-                debug!("injecting {}", #quoted_name);
+                #log_debug
 
                 Ok(#name {
                     #(#resolve_fields)*
@@ -77,13 +92,23 @@ fn derive_for_unnamed(name: Ident, fields: FieldsUnnamed, resolve_type: Path) ->
 
     let resolve_fields = fields.unnamed.iter().enumerate().map(|(index, field)| {
         let ty = quote!(#field).to_string();
+        let log_debug = if cfg!(feature = "logging") {
+            quote! { debug!("resolving {}::{}::{}", #quoted_name, #index, #ty); }
+        } else {
+            quote! {}
+        };
+        let log_warning = if cfg!(feature = "logging") {
+            quote! { warn!("could not resolve {}::{}", #quoted_name, #ty); }
+        } else {
+            quote! {}
+        };
 
         quote_spanned! {field.span()=>
             {
-                debug!("resolving {}::{}::{}", #quoted_name, #index, #ty);
+                #log_debug
 
                 kamikaze_di::Injector::inject(container).map_err(|s| {
-                    warn!("could not resolve {}::{}", #quoted_name, #ty);
+                    #log_warning
 
                     format!("could not resolve {}::{}: {}", #quoted_name, #ty, s)
                 })?
@@ -91,10 +116,16 @@ fn derive_for_unnamed(name: Ident, fields: FieldsUnnamed, resolve_type: Path) ->
         }
     });
 
+    let log_debug = if cfg!(feature = "logging") {
+        quote! { debug!("injecting {}", #quoted_name); }
+    } else {
+        quote! { }
+    };
+
     TokenStream::from(quote! {
         impl #resolve_type for #name {
             fn resolve(container: &kamikaze_di::Container) -> kamikaze_di::Result<Self> {
-                debug!("injecting {}", #quoted_name);
+                #log_debug
 
                 Ok(#name (
                     #(#resolve_fields)*

@@ -7,10 +7,14 @@ edition = "2018"
 [lib]
 proc-macro = true
 
+[features]
+default = []
+logging = []
+
 [dependencies]
 quote = "^0.6"
 syn = "^0.15"
-log = "^0.4"
+log = { version = "^0.4", optional = true }
 
 [dev-dependencies]
 kamikaze_di = { path = "../kamikaze_di" }

@@ -6,4 +6,6 @@ edition = "2018"
 
 [dependencies]
 kamikaze_di = { path = "../../kamikaze_di" }
-kamikaze_di_derive = { path = "../../kamikaze_di_derive" }
+kamikaze_di_derive = { path = "../../kamikaze_di_derive", features = ["logging"] }
+log = "^0.4"
+env_logger = "^0.6"
