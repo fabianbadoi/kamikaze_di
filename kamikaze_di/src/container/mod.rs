@@ -25,16 +25,21 @@ pub type Builder<T> = FnOnce(&Container) -> T;
 
 impl Container {
     fn has<T: 'static>(&self) -> bool {
+        debug!("has called");
+
         let type_id = TypeId::of::<T>();
 
         self.resolvers.borrow().contains_key(&type_id)
     }
 
     fn get<T: Clone + 'static>(&self) -> Result<T> {
+        debug!("resolving type via .get()");
+
         let type_id = TypeId::of::<T>();
         let _guard = self.cycle_stopper.track(type_id);
 
         let resolver_type = self.get_resolver_type(type_id);
+        debug!("resolving via {:?}", resolver_type);
 
         match resolver_type {
             Some(ResolverType::Factory) => self.call_factory::<T>(type_id),
@@ -95,6 +100,8 @@ impl Container {
     }
 
     fn insert<T: 'static>(&self, resolver: Resolver) -> Result<()> {
+        debug!("inerting new type");
+
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
@@ -119,6 +126,7 @@ enum Resolver {
     Shared(Box<Any>),
 }
 
+#[derive(Debug)]
 enum ResolverType {
     Factory,
     Builder,

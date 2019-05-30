@@ -71,6 +71,7 @@ impl ContainerBuilder {
     }
 
     pub fn build(self) -> Container {
+        debug!("builder consumed");
         Container {
             resolvers: RefCell::new(self.resolvers),
             cycle_stopper: CycleStopper::default(),
@@ -90,6 +91,8 @@ impl ContainerBuilder {
     /// assert!(result.is_ok());
     /// ```
     pub fn register<T: 'static>(&mut self, item: T) -> Result<()> {
+        debug!("registering type");
+
         // shared resolvers hold Box<Any>
         let resolver = Resolver::Shared(Box::new(item));
 
@@ -129,6 +132,8 @@ impl ContainerBuilder {
         F: (FnMut(&Container) -> T) + 'static,
         T: 'static,
     {
+        debug!("registering factory");
+
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
         // see call_factory() for use.
@@ -165,6 +170,7 @@ impl ContainerBuilder {
     /// let x2 = container.resolve::<X>().unwrap();
     /// ```
     pub fn register_automatic_factory<T: Inject + 'static>(&mut self) -> Result<()> {
+        debug!("registering auto factory");
         self.register_factory(auto_factory::<T>)
     }
 
@@ -206,6 +212,8 @@ impl ContainerBuilder {
         B: (FnOnce(&Container) -> T) + 'static,
         T: 'static,
     {
+        debug!("registering buiilder");
+
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
         // see consume_builder() for use.
@@ -236,6 +244,8 @@ impl ContainerBuilder {
     }
 
     fn insert<T: 'static>(&mut self, resolver: Resolver) -> Result<()> {
+        debug!("inserting new object");
+
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
@@ -249,5 +259,7 @@ impl ContainerBuilder {
 }
 
 fn auto_factory<T: Inject>(container: &Container) -> T {
+    debug!("creating object in auto factory");
+
     T::resolve(container).unwrap()
 }

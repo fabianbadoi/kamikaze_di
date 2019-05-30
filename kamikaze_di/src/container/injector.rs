@@ -94,6 +94,7 @@ where
     T: Clone + 'static,
 {
     default fn inject(&self) -> Result<T> {
+        debug!("injecting registered type");
         self.get()
     }
 }
@@ -111,7 +112,10 @@ where
     T: Inject + Clone + 'static,
 {
     fn inject(&self) -> Result<T> {
+        debug!("injecting Inject type");
+
         if !self.has::<T>() {
+            debug!("Inject type not known, auto-resolving");
             let item = T::resolve(self)?;
 
             use super::Resolver;
@@ -129,7 +133,11 @@ where
     T: InjectAsRc + 'static,
 {
     fn inject(&self) -> Result<Rc<T>> {
+        debug!("injecting InjectAsRc type");
+
         if !self.has::<Rc<T>>() {
+            debug!("InjectAsRc type not known, auto-resolving");
+
             let item = T::resolve(self)?;
 
             use super::Resolver;

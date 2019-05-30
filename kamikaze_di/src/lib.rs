@@ -1,4 +1,6 @@
 #![feature(specialization)]
+#[macro_use]
+extern crate log;
 
 mod container;
 

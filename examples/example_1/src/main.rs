@@ -93,8 +93,13 @@ struct VoiceBox {
 
 impl InjectAsRc for VoiceBox {
     fn resolve(container: &Container) -> Result<VoiceBox> {
+        debug!("getting normal voice");
         let normal: Normal = container.inject()?;
+
+        debug!("getting loud voice");
         let loud: Loud = container.inject()?;
+
+        debug!("getting soft voice");
         let soft: Soft = container.inject()?;
             
         Ok(VoiceBox {
