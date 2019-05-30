@@ -7,11 +7,13 @@ pub struct CycleStopper {
     tracked: RefCell<HashSet<TypeId>>,
 }
 
+/// We use this mechanism to avoid circular dependencies
 impl CycleStopper {
     pub fn track(&self, type_id: TypeId) -> CycleGuard<'_> {
         let mut tracked = self.tracked.borrow_mut();
 
         if tracked.contains(&type_id) {
+            // admitedly, this ends up being a very unuseful error message
             panic!(
                 "Circular dependency detected when resolving {:#?}.\nResole history is:\n{:#?}",
                 type_id, tracked
@@ -75,7 +77,7 @@ mod tests {
 
         {
             stopper.track(TypeId::of::<i32>());
-        } // This goes out of scope
+        } // the CycleGuard created by .track() goes out of scope
         stopper.track(TypeId::of::<i32>());
     }
 }

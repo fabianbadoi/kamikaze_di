@@ -90,6 +90,7 @@ impl ContainerBuilder {
     /// assert!(result.is_ok());
     /// ```
     pub fn register<T: 'static>(&mut self, item: T) -> Result<()> {
+        // shared resolvers hold Box<Any>
         let resolver = Resolver::Shared(Box::new(item));
 
         self.insert::<T>(resolver)
