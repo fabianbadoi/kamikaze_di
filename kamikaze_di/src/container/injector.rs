@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
+use super::private::Sealed;
 use crate::container::Container;
 use crate::Result;
-use super::private::Sealed;
 
 /// Resolves dependencies automatically.
 ///

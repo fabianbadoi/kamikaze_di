@@ -1,5 +1,5 @@
-use super::*;
 use super::private::Sealed;
+use super::*;
 
 /// Resolves dependencies.
 ///

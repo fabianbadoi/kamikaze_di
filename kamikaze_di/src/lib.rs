@@ -47,11 +47,16 @@
 //! ```
 #![doc(html_root_url = "https://docs.rs/kamikaze_di/0.1.0")]
 #![feature(specialization)]
-#![deny(missing_docs,
-        missing_debug_implementations, missing_copy_implementations,
-        trivial_casts, trivial_numeric_casts,
-        unsafe_code,
-        unused_import_braces, unused_qualifications)]
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unused_import_braces,
+    unused_qualifications
+)]
 
 #[macro_use]
 extern crate log;
