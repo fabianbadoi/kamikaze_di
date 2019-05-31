@@ -12,6 +12,9 @@ use crate::Result;
 use cycle::CycleStopper;
 
 /// Dependency container. Can be used with Resolver or Injector.
+///
+/// See [Injector](trait.Injector.html) and [Resolver](trait.Resolver.html) on how to use.
+/// Use the [ContainerBuilder](struct.ContainerBuilder.html) to set up containers.
 #[derive(Debug)]
 pub struct Container {
     resolvers: RefCell<HashMap<TypeId, Resolver>>,
@@ -25,6 +28,38 @@ pub type Factory<T> = FnMut(&Container) -> T;
 pub type Builder<T> = FnOnce(&Container) -> T;
 
 impl Container {
+    /// Creates an empty container.
+    ///
+    /// Even though it will be empty, it will still resolve
+    /// dependencies via the [Injector](trait.Injector.html) trait.
+    ///
+    /// # Examples
+    /// ```
+    /// use kamikaze_di::{Container, Inject, Injector, Result};
+    ///
+    /// #[derive(Clone)]
+    /// struct X {
+    ///     inner: usize,
+    /// };
+    ///
+    /// impl Inject for X {
+    ///     fn resolve(container: &Container) -> Result<X> {
+    ///         Ok(X { inner: 42 })
+    ///     }
+    /// }
+    ///
+    /// let container: Container = Container::new();
+    /// let x: X = container.inject().unwrap();
+    ///
+    /// assert_eq!(42, x.inner);
+    /// ```
+    pub fn new() -> Container {
+        Container {
+            resolvers: RefCell::new(Default::default()),
+            cycle_stopper: Default::default(),
+        }
+    }
+
     fn has<T: 'static>(&self) -> bool {
         debug!("has called");
 
@@ -112,6 +147,12 @@ impl Container {
         self.resolvers.borrow_mut().insert(type_id, resolver);
 
         Ok(())
+    }
+}
+
+impl Default for Container {
+    fn default() -> Container {
+        Container::new()
     }
 }
 
