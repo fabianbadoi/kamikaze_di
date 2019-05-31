@@ -98,9 +98,9 @@ impl Container {
     }
 
     fn call_factory<T: 'static>(&self, type_id: TypeId) -> Result<T> {
-        if let Resolver::Factory(cell) = self.resolvers.borrow().get(&type_id).unwrap() {
+        if let Resolver::Factory(cell) = self.resolvers.borrow().get(&type_id).expect("could not find a registered factory") {
             let mut boxed = cell.borrow_mut();
-            let factory = boxed.downcast_mut::<Box<Factory<T>>>().unwrap();
+            let factory = boxed.downcast_mut::<Box<Factory<T>>>().expect("could not downcast factory");
 
             let item = factory(self);
 
@@ -114,9 +114,9 @@ impl Container {
         let type_id = TypeId::of::<T>();
 
         let builder = if let Resolver::Builder(boxed) =
-            self.resolvers.borrow_mut().remove(&type_id).unwrap()
+            self.resolvers.borrow_mut().remove(&type_id).expect("could not find a registered resolver")
         {
-            boxed.downcast::<Box<Builder<T>>>().unwrap()
+            boxed.downcast::<Box<Builder<T>>>().expect("could not downcast builder")
         } else {
             panic!("Type {:?} not registered as builder", type_id)
         };
@@ -128,11 +128,11 @@ impl Container {
     }
 
     fn get_shared<T: Clone + 'static>(&self, type_id: TypeId) -> Result<T> {
-        if let Resolver::Shared(boxed_any) = self.resolvers.borrow().get(&type_id).unwrap() {
+        if let Resolver::Shared(boxed_any) = self.resolvers.borrow().get(&type_id).expect("could not find a registered type") {
             use std::borrow::Borrow;
 
             let borrowed_any: &Any = boxed_any.borrow();
-            let borrowed_item: &T = borrowed_any.downcast_ref().unwrap();
+            let borrowed_item: &T = borrowed_any.downcast_ref().expect("could not downcast shared object");
 
             return Ok(borrowed_item.clone());
         }
