@@ -274,7 +274,7 @@ impl ContainerBuilder {
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
-            return Err(format!("Container already has {:?}", type_id));
+            return Err(format!("Container already has {:?}", type_id).into());
         }
 
         self.resolvers.insert(type_id, resolver);

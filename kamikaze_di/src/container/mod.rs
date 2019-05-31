@@ -89,7 +89,7 @@ impl Container {
                 self.get_shared(type_id)
             }
             Some(ResolverType::Shared) => self.get_shared(type_id),
-            None => Err(format!("Type not registered: {:?}", type_id)),
+            None => Err(format!("Type not registered: {:?}", type_id).into()),
         }
     }
 
@@ -146,7 +146,7 @@ impl Container {
         let type_id = TypeId::of::<T>();
 
         if self.has::<T>() {
-            return Err(format!("Container already has {:?}", type_id));
+            return Err(format!("Container already has {:?}", type_id).into());
         }
 
         self.resolvers.borrow_mut().insert(type_id, resolver);
