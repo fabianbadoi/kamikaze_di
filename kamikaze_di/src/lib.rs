@@ -45,6 +45,7 @@
 //! # Ok(())
 //! # }
 //! ```
+#![doc(html_root_url = "https://docs.rs/kamikaze_di/0.1.0")]
 #![feature(specialization)]
 #[macro_use]
 extern crate log;

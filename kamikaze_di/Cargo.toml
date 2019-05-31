@@ -1,8 +1,15 @@
 [package]
 name = "kamikaze_di"
-version = "0.1.0"
+version = "0.1.0" # remember to update html_root_url
 authors = ["Fabian Badoi <fabian.badoi@gmail.com>"]
 edition = "2018"
+description = "Exploration of Dependency Injection in Rust"
+license = "MIT"
+repository = "https://github.com/fabianbadoi/kamikaze_di"
+homepage = "https://github.com/fabianbadoi/kamikaze_di"
+readme = "README.md"
+keywords = ["di", "dependency injection"]
+categories = ["development-tools::build-utils"]
 
 [dependencies]
 log = "^0.4"

@@ -3,6 +3,13 @@ name = "kamikaze_di_derive"
 version = "0.1.0"
 authors = ["Fabian Badoi <fabianbadoi@gmail.com>"]
 edition = "2018"
+description = "Exploration of Dependency Injection in Rust"
+license = "MIT"
+repository = "https://github.com/fabianbadoi/kamikaze_di"
+homepage = "https://github.com/fabianbadoi/kamikaze_di"
+readme = "README.md"
+keywords = ["di", "dependency injection"]
+categories = ["development-tools::build-utils"]
 
 [lib]
 proc-macro = true
