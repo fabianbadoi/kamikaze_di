@@ -1,4 +1,5 @@
 use super::*;
+use super::private::Sealed;
 
 /// Resolves dependencies.
 ///
@@ -61,7 +62,7 @@ use super::*;
 /// # Ok(())
 /// # }
 /// ```
-pub trait Resolver {
+pub trait Resolver: Sealed {
     /// Resolve a dependency
     ///
     /// # Examples

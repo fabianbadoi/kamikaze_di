@@ -226,3 +226,10 @@ mod tests {
         container.resolve::<i32>().unwrap();
     }
 }
+
+// Prevent users from implementing Injector and Resolver 
+mod private {
+    pub trait Sealed {}
+
+    impl Sealed for super::Container {}
+}

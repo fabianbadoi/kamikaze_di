@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::container::Container;
 use crate::Result;
+use super::private::Sealed;
 
 /// Resolves dependencies automatically.
 ///
@@ -9,7 +10,7 @@ use crate::Result;
 /// them having to be registered beforehand.
 ///
 /// See the [Inject](trait.Inject.html) trait for examples.
-pub trait Injector<T> {
+pub trait Injector<T>: Sealed {
     fn inject(&self) -> Result<T>;
 }
 
