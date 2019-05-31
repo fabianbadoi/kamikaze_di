@@ -37,6 +37,8 @@ impl Container {
     /// ```
     /// use kamikaze_di::{Container, Inject, Injector, Result};
     ///
+    /// # fn main() -> std::result::Result<(), String> {
+    /// #
     /// #[derive(Clone)]
     /// struct X {
     ///     inner: usize,
@@ -49,9 +51,12 @@ impl Container {
     /// }
     ///
     /// let container: Container = Container::new();
-    /// let x: X = container.inject().unwrap();
+    /// let x: X = container.inject()?;
     ///
     /// assert_eq!(42, x.inner);
+    /// #
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new() -> Container {
         Container {

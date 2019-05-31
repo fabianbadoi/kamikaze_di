@@ -24,6 +24,8 @@ pub trait Injector<T> {
 /// ```
 /// use kamikaze_di::{Result, Container, ContainerBuilder, Inject, Injector};
 ///
+/// # fn main() -> std::result::Result<(), String> {
+/// #
 /// #[derive(Clone)]
 /// struct Point { x: i32, y: i32 }
 ///
@@ -41,10 +43,13 @@ pub trait Injector<T> {
 ///
 /// let container = container_builder.build();
 ///
-/// let point: Point = container.inject().unwrap();
+/// let point: Point = container.inject()?;
 ///
 /// assert_eq!(42, point.x);
 /// assert_eq!( 5, point.y);
+/// #
+/// # Ok(())
+/// # }
 /// ```
 pub trait Inject
 where
@@ -65,6 +70,8 @@ where
 /// use std::rc::Rc;
 /// use kamikaze_di::{Result, Container, ContainerBuilder, InjectAsRc, Injector};
 ///
+/// # fn main() -> std::result::Result<(), String> {
+/// #
 /// struct Point { x: i32, y: i32 }
 ///
 /// impl InjectAsRc for Point {
@@ -81,12 +88,14 @@ where
 ///
 /// let container = container_builder.build();
 ///
-/// let point: Result<Rc<Point>> = container.inject();
-/// let point = point.unwrap();
+/// let point: Rc<Point> = container.inject()?;
 ///
 /// assert_eq!(42, point.x);
 /// assert_eq!( 5, point.y);
 /// assert_eq!(2, Rc::strong_count(&point));
+/// #
+/// # Ok(())
+/// # }
 /// ```
 pub trait InjectAsRc
 where

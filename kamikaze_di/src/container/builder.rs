@@ -25,20 +25,27 @@ use super::{Container, Resolver};
 /// ```
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
 /// #
+/// # fn main() -> Result<(), String> {
+/// #
 /// let mut builder = ContainerBuilder::new();
-/// let result_1 = builder.register::<u32>(42);
-/// let result_2 = builder.register::<u32>(43);
+/// let first_register_works = builder.register::<u32>(42);
+/// let re_registering_doesnt_work = builder.register::<u32>(43);
 ///
-/// assert!(result_1.is_ok());
-/// assert!(result_2.is_err());
+/// assert!(first_register_works.is_ok());
+/// assert!(!re_registering_doesnt_work.is_ok());
 ///
 /// let container = builder.build();
-/// assert_eq!(container.resolve::<u32>().unwrap(), 42);
+/// assert_eq!(container.resolve::<u32>()?, 42);
+/// #
+/// # Ok(())
+/// # }
 /// ```
 ///
 /// Circular dependencies will cause continer.resolve() to panic:
 /// ```should_panic
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
+/// #
+/// # fn main() -> Result<(), String> {
 /// #
 /// let mut builder = ContainerBuilder::new();
 ///
@@ -58,7 +65,10 @@ use super::{Container, Resolver};
 ///
 /// let container = builder.build();
 ///
-/// let forty_one: i64 = container.resolve().unwrap();
+/// let forty_one: i64 = container.resolve()?;
+/// #
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Default, Debug)]
 pub struct ContainerBuilder {
@@ -108,6 +118,8 @@ impl ContainerBuilder {
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     /// #
+    /// # fn main() -> Result<(), String> {
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
     ///
@@ -121,11 +133,14 @@ impl ContainerBuilder {
     ///
     /// let container = builder.build();
     ///
-    /// let forty_two: i32 = container.resolve().unwrap();
-    /// let forty_one: i32 = container.resolve().unwrap();
+    /// let forty_two: i32 = container.resolve()?;
+    /// let forty_one: i32 = container.resolve()?;
     ///
     /// assert_eq!(forty_two, 42);
     /// assert_eq!(forty_one, 41);
+    /// #
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn register_factory<T, F>(&mut self, factory: F) -> Result<()>
     where
@@ -152,6 +167,8 @@ impl ContainerBuilder {
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver, Inject, Result};
     /// # use std::rc::Rc;
     /// #
+    /// # fn main() -> std::result::Result<(), String> {
+    /// #
     /// #[derive(Clone)]
     /// struct X {}
     /// impl Inject for X {
@@ -165,8 +182,11 @@ impl ContainerBuilder {
     ///
     /// let container = builder.build();
     ///
-    /// let x1 = container.resolve::<X>().unwrap();
-    /// let x2 = container.resolve::<X>().unwrap();
+    /// let x1 = container.resolve::<X>()?;
+    /// let x2 = container.resolve::<X>()?;
+    /// #
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn register_automatic_factory<T: Inject + 'static>(&mut self) -> Result<()> {
         debug!("registering auto factory");
@@ -183,6 +203,8 @@ impl ContainerBuilder {
     ///
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
+    /// #
+    /// # fn main() -> std::result::Result<(), String> {
     /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
@@ -201,11 +223,14 @@ impl ContainerBuilder {
     ///
     /// let container = builder.build();
     ///
-    /// let forty_one = container.resolve::<i64>().unwrap();
-    /// let forty_two = container.resolve::<i32>().unwrap();
+    /// let forty_one = container.resolve::<i64>()?;
+    /// let forty_two = container.resolve::<i32>()?;
     ///
     /// assert_eq!(forty_one, 41);
     /// assert_eq!(forty_two, 42);
+    /// #
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn register_builder<T, B>(&mut self, builder: B) -> Result<()>
     where

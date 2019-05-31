@@ -19,6 +19,8 @@ use super::*;
 /// # use std::rc::Rc;
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
 /// #
+/// # fn main() -> std::result::Result<(), String> {
+/// #
 /// // does not implement Clone or Copy
 /// struct Keeper { x: i32 }
 ///
@@ -27,8 +29,11 @@ use super::*;
 ///
 /// let container = builder.build();
 ///
-/// let resolved = container.resolve::<Rc<Keeper>>().unwrap();
+/// let resolved = container.resolve::<Rc<Keeper>>()?;
 /// assert_eq!((*resolved).x, 42);
+/// #
+/// # Ok(())
+/// # }
 /// ```
 ///
 ///
@@ -37,6 +42,8 @@ use super::*;
 /// ```
 /// # use std::rc::Rc;
 /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
+/// #
+/// # fn main() -> std::result::Result<(), String> {
 /// #
 /// // does not implement Clone or Copy
 /// struct Keeper { x: i32 }
@@ -48,8 +55,11 @@ use super::*;
 ///
 /// let container = builder.build();
 ///
-/// let resolved = container.resolve::<Rc<XKeeper>>().unwrap();
+/// let resolved = container.resolve::<Rc<XKeeper>>()?;
 /// assert_eq!(resolved.get_x(), 42);
+/// #
+/// # Ok(())
+/// # }
 /// ```
 pub trait Resolver {
     /// Resolve a dependency
@@ -59,13 +69,18 @@ pub trait Resolver {
     /// ```
     /// # use kamikaze_di::{Container, ContainerBuilder, Resolver};
     /// #
+    /// # fn main() -> std::result::Result<(), String> {
+    /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<u32>(42);
     ///
     /// let container = builder.build();
     ///
-    /// let resolved: u32 = container.resolve().unwrap();
+    /// let resolved: u32 = container.resolve()?;
     /// assert_eq!(resolved, 42);
+    /// #
+    /// # Ok(())
+    /// # }
     /// ```
     fn resolve<T: Clone + 'static>(&self) -> Result<T>;
 

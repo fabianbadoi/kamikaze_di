@@ -26,13 +26,13 @@
 //!    db_connection: Rc<DatabaseConnection>,
 //! }
 //!
-//!
+//! # fn main() -> std::result::Result<(), String> {
+//! #
 //! let mut builder = ContainerBuilder::new();
 //! builder
 //!    .register::<Config>(Config {
 //!        db: "localhost".to_string(),
-//!    })
-//!    .unwrap();
+//!    })?;
 //!
 //! let container = builder.build();
 //!
@@ -40,7 +40,10 @@
 //!
 //! assert!(user_repo_result.is_ok());
 //!
-//! let _user_repo = user_repo_result.unwrap();
+//! let _user_repo = user_repo_result?;
+//! #
+//! # Ok(())
+//! # }
 //! ```
 #![feature(specialization)]
 #[macro_use]
