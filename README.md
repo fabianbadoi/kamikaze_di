@@ -16,6 +16,7 @@ struct DabatabaseConnection {
 }
 ```
 
+
 ## Discussion
 
 There are two important concepts in Rust: ownershipt and mutability. Both influence the design of our DI container.

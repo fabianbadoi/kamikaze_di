@@ -63,7 +63,7 @@ use super::*;
 /// # }
 /// ```
 pub trait Resolver: Sealed {
-    /// Resolve a dependency
+    /// Resolve a dependency.
     ///
     /// # Examples
     ///
@@ -85,7 +85,7 @@ pub trait Resolver: Sealed {
     /// ```
     fn resolve<T: Clone + 'static>(&self) -> Result<T>;
 
-    /// Returns true if a dependency is registered
+    /// Returns true if a dependency is registered.
     ///
     /// # Examples
     ///

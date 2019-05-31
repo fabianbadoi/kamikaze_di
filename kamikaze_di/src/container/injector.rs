@@ -11,7 +11,7 @@ use crate::Result;
 ///
 /// See the [Inject](trait.Inject.html) trait for examples.
 pub trait Injector<T>: Sealed {
-    /// Produces T
+    /// Produces T.
     fn inject(&self) -> Result<T>;
 }
 
@@ -57,7 +57,7 @@ pub trait Inject
 where
     Self: Sized,
 {
-    /// Resolve Self from a Container
+    /// Resolve Self from a Container.
     fn resolve(container: &Container) -> Result<Self>;
 }
 

@@ -76,12 +76,12 @@ pub struct ContainerBuilder {
 }
 
 impl ContainerBuilder {
-    /// Constructor
+    /// Constructor.
     pub fn new() -> ContainerBuilder {
         Default::default()
     }
 
-    /// Creates a Container from the builder
+    /// Creates a Container from the builder.
     pub fn build(self) -> Container {
         debug!("builder consumed");
         Container {
@@ -90,7 +90,7 @@ impl ContainerBuilder {
         }
     }
 
-    /// Registeres a dependency directly
+    /// Registeres a dependency directly.
     ///
     /// # Examples
     /// #
@@ -251,7 +251,7 @@ impl ContainerBuilder {
         self.insert::<T>(resolver)
     }
 
-    /// Returns true if a dependency is registered
+    /// Returns true if a dependency is registered.
     ///
     /// # Examples
     ///

@@ -1,4 +1,4 @@
-/// Error type
+/// Error type.
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Error {
     message: String,
