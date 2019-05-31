@@ -76,10 +76,12 @@ pub struct ContainerBuilder {
 }
 
 impl ContainerBuilder {
+    /// Constructor
     pub fn new() -> ContainerBuilder {
         Default::default()
     }
 
+    /// Creates a Container from the builder
     pub fn build(self) -> Container {
         debug!("builder consumed");
         Container {
@@ -152,8 +154,8 @@ impl ContainerBuilder {
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
         // see call_factory() for use.
-        let boxed = Box::new(factory) as Box<(FnMut(&Container) -> T) + 'static>;
-        let boxed = Box::new(boxed) as Box<Any>;
+        let boxed: Box<(FnMut(&Container) -> T) + 'static> = Box::new(factory);
+        let boxed: Box<Any> = Box::new(boxed);
         let resolver = Resolver::Factory(RefCell::new(boxed));
 
         self.insert::<T>(resolver)
@@ -242,8 +244,8 @@ impl ContainerBuilder {
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
         // see consume_builder() for use.
-        let boxed = Box::new(builder) as Box<(FnOnce(&Container) -> T) + 'static>;
-        let boxed = Box::new(boxed) as Box<Any>;
+        let boxed: Box<(FnOnce(&Container) -> T) + 'static> = Box::new(builder);
+        let boxed: Box<Any> = Box::new(boxed);
         let resolver = Resolver::Builder(boxed);
 
         self.insert::<T>(resolver)

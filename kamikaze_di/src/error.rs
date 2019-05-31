@@ -39,12 +39,6 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl Error {
-    pub fn with_message(message: &str) -> Error {
-        message.into()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::Error;

@@ -11,6 +11,7 @@ use super::private::Sealed;
 ///
 /// See the [Inject](trait.Inject.html) trait for examples.
 pub trait Injector<T>: Sealed {
+    /// Produces T
     fn inject(&self) -> Result<T>;
 }
 
@@ -56,6 +57,7 @@ pub trait Inject
 where
     Self: Sized,
 {
+    /// Resolve Self from a Container
     fn resolve(container: &Container) -> Result<Self>;
 }
 
@@ -102,6 +104,9 @@ pub trait InjectAsRc
 where
     Self: Sized,
 {
+    /// Resolve Self from a Container.
+    ///
+    /// The object will be Rc-ed inside the container.
     fn resolve(container: &Container) -> Result<Self>;
 }
 
