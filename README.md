@@ -16,6 +16,22 @@ struct DabatabaseConnection {
 }
 ```
 
+See examples and docs for more.
+
+## Installation
+Get both the base crate and the derive crate.
+
+```toml
+[dependencies]
+kamikaze_di = "0.1.0"
+kamikaze_di_derive = "0.1.0"
+# or use this for slightly better debug! logs in the derive crate
+# log = "0.4.6"
+# kamikaze_di_derive = { version = "0.1.0", features="logging" }
+```
+
+**This requires rust [nightly](https://doc.rust-lang.org/edition-guide/rust-2018/rustup-for-managing-rust-versions.html?highlight=nightly#managing-versions).**
+
 
 ## Discussion
 
