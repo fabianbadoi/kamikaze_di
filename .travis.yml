@@ -1,0 +1,8 @@
+sudo: false
+language: rust
+rust:
+- nightly
+script:
+- |
+  rustup run nightly cargo test &&
+  rustup run nightly cargo check --manifest-path examples/example_1/Cargo.toml # TODO test with minimal versions
