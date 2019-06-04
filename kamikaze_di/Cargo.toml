@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/fabianbadoi/kamikaze_di"
 homepage = "https://github.com/fabianbadoi/kamikaze_di"
 readme = "README.md"
-keywords = ["di", "dependency injection"]
+keywords = ["di", "dependency", "injection", "ioc"]
 categories = ["development-tools::build-utils"]
 
 [dependencies]
