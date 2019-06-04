@@ -20,7 +20,7 @@ struct DabatabaseConnection {
 }
 ```
 
-See examples and docs for more.
+See [examples] and docs for more.
 
 ## Installation
 Get both the base crate and the derive crate.
@@ -34,7 +34,7 @@ kamikaze_di_derive = "0.1.0"
 # kamikaze_di_derive = { version = "0.1.0", features="logging" }
 ```
 
-**This requires rust [nightly](https://doc.rust-lang.org/edition-guide/rust-2018/rustup-for-managing-rust-versions.html?highlight=nightly#managing-versions).**
+**This requires rust [nightly].**
 
 
 ## Discussion
@@ -130,4 +130,9 @@ This project should only panic on circular dependencies, any other panic is a bu
 
 
 ## Examples
-There are examples in repo and the documentation.
+There are examples in [repo] and the documentation.
+
+
+[examples]: https://github.com/fabianbadoi/kamikaze_di/tree/master/examples/example_1
+[nightly]: https://doc.rust-lang.org/edition-guide/rust-2018/rustup-for-managing-rust-versions.html?highlight=nightly#managing-versions
+[repo]: https://github.com/fabianbadoi/kamikaze_di/
