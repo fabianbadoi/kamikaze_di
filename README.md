@@ -1,4 +1,7 @@
-# Kamikaze DI
+# Kamikaze DI [![Build Status]][travis]
+
+[Build Status]: https://travis-ci.org/fabianbadoi/kamikaze_di.svg?branch=master
+[travis]: https://travis-ci.org/fabianbadoi/kamikaze_di
 
 This is what a dependency injection container for Rust. It's inspired by container libraries in other languages.
 
@@ -12,6 +15,7 @@ let config: Config = cotantiner.inject();  // using Injector and Inject/InjectAs
 // deriving the Inject trait teaches the container how to create it
 #[derive(Inject, Clone)]
 struct DabatabaseConnection {
+    config: Config,
     ...
 }
 ```
@@ -77,6 +81,9 @@ let database: MysqlConnection = ...;
 builder.register::<Rc<Database>>(Rc::new(database));
 ```
 
+#### Why not &T?
+I made the decision to use Clone/Rc early on, I'm very unsure it was the right one.
+
 
 ### What about mutablility?
 
@@ -117,8 +124,10 @@ could not resolve Jester::voice_box : Rc < VoiceBox > ...
 It's not perfect, the error doesn't use the full path of the type, but it's probably good enough to figure out what went
 wrong.
 
-## Is if possible to insert wrong type
-I don't know, find out is on my TODO list.
+
+### Panics
+This project should only panic on circular dependencies, any other panic is a bug.
+
 
 ## Examples
 There are examples in repo and the documentation.
