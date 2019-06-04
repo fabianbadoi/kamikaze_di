@@ -94,9 +94,10 @@ pub trait Resolver: Sealed {
     /// #
     /// let mut builder = ContainerBuilder::new();
     /// builder.register::<i16>(43);
+    /// let container = builder.build();
     ///
-    /// assert!(builder.has::<i16>());
-    /// assert!(!builder.has::<i32>());
+    /// assert!(container.has::<i16>());
+    /// assert!(!container.has::<i32>());
     /// ```
     fn has<T: 'static>(&self) -> bool;
 }
