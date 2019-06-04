@@ -154,8 +154,8 @@ impl ContainerBuilder {
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
         // see call_factory() for use.
-        let boxed: Box<(FnMut(&Container) -> T) + 'static> = Box::new(factory);
-        let boxed: Box<Any> = Box::new(boxed);
+        let boxed: Box<dyn (FnMut(&Container) -> T) + 'static> = Box::new(factory);
+        let boxed: Box<dyn Any> = Box::new(boxed);
         let resolver = Resolver::Factory(RefCell::new(boxed));
 
         self.insert::<T>(resolver)
@@ -244,8 +244,8 @@ impl ContainerBuilder {
         // We use double boxes so we can downcast to the inner box type.
         // you can only downcast to Sized types, that's why we need an inner box
         // see consume_builder() for use.
-        let boxed: Box<(FnOnce(&Container) -> T) + 'static> = Box::new(builder);
-        let boxed: Box<Any> = Box::new(boxed);
+        let boxed: Box<dyn (FnOnce(&Container) -> T) + 'static> = Box::new(builder);
+        let boxed: Box<dyn Any> = Box::new(boxed);
         let resolver = Resolver::Builder(boxed);
 
         self.insert::<T>(resolver)

@@ -23,9 +23,9 @@ pub struct Container {
 
 // TODO these can be trait aliases, once that feature becomes stable
 /// Factories can be called multiple times
-pub type Factory<T> = FnMut(&Container) -> T;
+pub type Factory<T> = dyn FnMut(&Container) -> T;
 /// Builders will only be called once
-pub type Builder<T> = FnOnce(&Container) -> T;
+pub type Builder<T> = dyn FnOnce(&Container) -> T;
 
 impl Container {
     /// Creates an empty container.
@@ -148,7 +148,7 @@ impl Container {
         {
             use std::borrow::Borrow;
 
-            let borrowed_any: &Any = boxed_any.borrow();
+            let borrowed_any: &dyn Any = boxed_any.borrow();
             let borrowed_item: &T = borrowed_any
                 .downcast_ref()
                 .expect("could not downcast shared object");
@@ -188,9 +188,9 @@ enum Resolver {
     /// call container.resolve() as they see fit. This means we can't
     /// own a mutable borrow to the resolvers collection during the
     /// calls. Thus we must use RefCell.
-    Factory(RefCell<Box<Any>>),
-    Builder(Box<Any>),
-    Shared(Box<Any>),
+    Factory(RefCell<Box<dyn Any>>),
+    Builder(Box<dyn Any>),
+    Shared(Box<dyn Any>),
 }
 
 #[derive(Debug)]
