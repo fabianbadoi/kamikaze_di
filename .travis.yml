@@ -1,12 +1,13 @@
 sudo: false
 language: rust
 rust:
-- nightly
+  - nightly
 notifications:
   email:
     on_success: never
     on_failure: never
 script:
-- |
-  rustup run nightly cargo test &&
-  rustup run nightly cargo check --manifest-path examples/example_1/Cargo.toml # TODO test with minimal versions
+  - cargo +nightly test
+  - cargo +nightly check --manifest-path examples/example_1/Cargo.toml
+  - cargo +nightly test -Z minimal-versions
+  - cargo +nightly check -Z minimal-versions --manifest-path examples/example_1/Cargo.toml
